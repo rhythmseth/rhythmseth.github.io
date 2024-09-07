@@ -3,40 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project 1: Colorizing the Prokudin-Gorskii photo collection</title>
+    <title>CS 180 Project 1: Colorizing the Prokudin-Gorskii photo collection</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">Project 1: Colorizing the Prokudin-Gorskii photo collection</h1>
-        
-        <nav class="mb-8">
-            <ul class="flex space-x-4">
-                <li><a href="#introduction" class="text-blue-600 hover:underline">Introduction</a></li>
-                <li><a href="#single-scale-alignment" class="text-blue-600 hover:underline">Single-scale Alignment</a></li>
-                <li><a href="#multi-scale-alignment" class="text-blue-600 hover:underline">Multi-scale Alignment</a></li>
-                <li><a href="#bells-and-whistles" class="text-blue-600 hover:underline">Bells and Whistles</a></li>
-            </ul>
-        </nav>
-        
-        <section id="introduction" class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Introduction</h2>
-            <p>For each subject in the Prokudin-Gorskii collection, three exposures were taken through a red, a green, and a blue filter. However, across these three channels, the images are not perfectly aligned, so a more intelligent algorithm is needed to produce the photographs in color. This project focuses on using single-scale and multi-scale algorithms to align both small and very large images from the collection. Additionally, methods of automatically contrasting and white-balancing the resulting color images were also explored.</p>
-        </section>
-        
-        <section id="single-scale-alignment" class="mb-8">
-            <h2 class="text-2xl font-semibold mb-4">Single-scale Alignment</h2>
-            <h3 class="text-xl font-semibold mb-2">Approach</h3>
-            <p class="mb-4"><!-- Add your approach description here --></p>
-            <h3 class="text-xl font-semibold mb-2">Results</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <img src="media/result1.jpg" alt="Result 1" class="w-full h-auto rounded-lg shadow-md">
-                <img src="media/result2.jpg" alt="Result 2" class="w-full h-auto rounded-lg shadow-md">
+    <div class="flex">
+        <!-- Left Sidebar Navigation -->
+        <nav class="w-64 bg-white h-screen fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-xl font-bold mb-4">Contents</h2>
+                <ul class="space-y-2">
+                    <li><a href="#introduction" class="text-blue-600 hover:underline">Introduction</a></li>
+                    <li><a href="#single-scale-alignment" class="text-blue-600 hover:underline">Single-scale Alignment</a>
+                        <ul class="ml-4 mt-2 space-y-1">
+                            <li><a href="#approach" class="text-blue-600 hover:underline">Approach</a></li>
+                            <li><a href="#results" class="text-blue-600 hover:underline">Results</a></li>
+                            <li><a href="#custom-images" class="text-blue-600 hover:underline">Custom Images</a></li>
+                            <li><a href="#offsets" class="text-blue-600 hover:underline">Offsets</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#multi-scale-alignment" class="text-blue-600 hover:underline">Multi-scale Alignment</a>
+                        <ul class="ml-4 mt-2 space-y-1">
+                            <li><a href="#approach-multi" class="text-blue-600 hover:underline">Approach</a></li>
+                            <li><a href="#optimizations" class="text-blue-600 hover:underline">Optimizations</a></li>
+                            <li><a href="#results-multi" class="text-blue-600 hover:underline">Results</a></li>
+                            <li><a href="#misalignments" class="text-blue-600 hover:underline">Misalignments</a></li>
+                            <li><a href="#custom-images-multi" class="text-blue-600 hover:underline">Custom Images</a></li>
+                            <li><a href="#offsets-multi" class="text-blue-600 hover:underline">Offsets</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#bells-and-whistles" class="text-blue-600 hover:underline">Bells and Whistles</a>
+                        <ul class="ml-4 mt-2 space-y-1">
+                            <li><a href="#contrast" class="text-blue-600 hover:underline">Contrast</a></li>
+                            <li><a href="#white-balance" class="text-blue-600 hover:underline">White Balance</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
-        </section>
-        
-        <!-- Add similar sections for Multi-scale Alignment and Bells and Whistles -->
-        
+        </nav>
+
+        <!-- Main Content -->
+        <main class="ml-64 p-8 w-full">
+            <h1 class="text-4xl font-bold mb-4">CS 180 Project 1: Colorizing the Prokudin-Gorskii photo collection</h1>
+            <p class="text-xl mb-8">By Rhythm Seth</p>
+
+            <div class="mb-12">
+                <img src="./resultImages/onionchurch_error.png" alt="Colorized Prokudin-Gorskii photo" class="w-full max-w-2xl mx-auto rounded-lg shadow-lg">
+            </div>
+
+            <section id="introduction" class="mb-12">
+                <h2 class="text-3xl font-semibold mb-4">Introduction</h2>
+                <p class="mb-4">For each subject in the Prokudin-Gorskii collection, three exposures were taken through a red, a green, and a blue filter. However, across these three channels, the images are not perfectly aligned, so a more intelligent algorithm is needed to produce the photographs in color. This project focuses on using single-scale and multi-scale algorithms to align both small and very large images from the collection. Additionally, methods of automatically contrasting and white-balancing the resulting color images were also explored.</p>
+            </section>
+
+            <section id="single-scale-alignment" class="mb-12">
+                <h2 class="text-3xl font-semibold mb-4">Single-scale Alignment</h2>
+                <h3 id="approach" class="text-2xl font-semibold mb-2">Approach</h3>
+                <p class="mb-4">For the single-scale alignment, I implemented a comprehensive approach that involved several key steps and optimizations:
+                    Channel Splitting: The input image is split into three channels (blue, green, and red) using the split_channels function.
+                    Normalization: Each channel is normalized to ensure consistent intensity ranges across all channels.
+                    Edge Detection: I applied Sobel filters to detect edges in each channel, which helps in focusing on the structural elements of the image during alignment.
+                    Border Cropping: To mitigate edge effects, I implemented a border_crop function to remove the outer pixels of each channel before alignment.
+                    Alignment Function: The align function uses a search-based approach to find the best alignment between two channels:
+                    It iterates through a range of possible displacements (controlled by search_range).
+                    For each displacement, it applies the transformation using the transform function.
+                    The alignment quality is assessed using normalized cross-correlation.
+                    The displacement with the highest correlation score is selected as the best alignment.
+                    Transformation: The transform function applies the calculated displacements to shift the image channels using np.roll.
+                    Metric Experimentation: I experimented with different similarity metrics:
+                    L2 Norm (L2_Norm function)
+                    Normalized Cross-Correlation (norm_cross_correlation function)
+                    Hyperparameter Tuning
+                    I experimented with various hyperparameters to optimize the alignment process:
+                    Search Range: Increased from a default of 15 to 20 or higher to accommodate larger misalignments.
+                    Border Crop Size: Adjusted the crop size (e.g., 30 pixels) to balance between removing edge artifacts and preserving image content.
+                    Normalization Method: Tried different normalization approaches, including min-max normalization and division by maximum value.</p>
+                <h3 id="results" class="text-2xl font-semibold mb-2">Results</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <img src="./resultImages/cathedral_singlescale_result.png" alt="Result 1" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/monastery_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/tobolsk_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
+                </div>
+            </section>
+
+            <section id="multi-scale-alignment" class="mb-12">
+                <h2 class="text-3xl font-semibold mb-4">Multi-scale Alignment</h2>
+                <h3 id="approach" class="text-2xl font-semibold mb-2">Approach</h3>
+                <p class="mb-4">For multi-scale alignment, I implemented a pyramid-based approach to handle larger images and improve efficiency:
+                    Image Pyramid: The build_pyramid function creates a multi-scale representation of each channel by successively downsampling the image.
+                    Pyramid Alignment: The pyramid_align function performs alignment at multiple scales:
+                    It starts with the smallest (coarsest) scale and progressively refines the alignment at larger scales.
+                    At each level, it uses the align function to find the best displacement.
+                    The displacement is scaled up for the next level and refined further.
+                    Edge Detection: Similar to the single-scale approach, Sobel filters are applied to highlight edges before alignment.
+                    Border Cropping: A more aggressive border cropping is applied to the larger images to remove potential artifacts.
+                    Iterative Refinement: The alignment process iterates through the pyramid levels, refining the displacement estimation at each step.
+                    Hyperparameter Tuning and Variations
+                    I experimented with several variations and hyperparameters in the multi-scale approach:
+                    Pyramid Levels: Adjusted the number of levels in the image pyramid (e.g., 5 levels) to balance between computational efficiency and alignment accuracy.
+                    Downscaling Factor: Used a factor of 0.5 for creating each level of the pyramid.
+                    Search Range: Varied the search range at different pyramid levels to allow for both coarse and fine adjustments.
+                    Border Crop Size: Experimented with different crop sizes, including a more aggressive crop for larger images (e.g., 100 pixels).
+                    Edge Detection Strength: Adjusted the Sobel filter parameters to optimize edge detection for alignment.</p>
+                <h3 id="results" class="text-2xl font-semibold mb-2">Results</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <img src="./resultImages/cathedral_singlescale_result.png" alt="Result 1" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/monastery_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/tobolsk_singlescale_result.png" alt="Result 3" class="w-full rounded-lg shadow-md">
+                </div>
+            </section>
+            
+
+        </main>
     </div>
 </body>
 </html>
