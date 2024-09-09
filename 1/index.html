@@ -19,7 +19,6 @@
                             <li><a href="#approach" class="text-blue-600 hover:underline">Approach</a></li>
                             <li><a href="#results" class="text-blue-600 hover:underline">Results</a></li>
                             <li><a href="#custom-images" class="text-blue-600 hover:underline">Custom Images</a></li>
-                            <li><a href="#offsets" class="text-blue-600 hover:underline">Offsets</a></li>
                         </ul>
                     </li>
                     <li><a href="#multi-scale-alignment" class="text-blue-600 hover:underline">Multi-scale Alignment</a>
@@ -34,10 +33,10 @@
                     </li>
                     <li><a href="#bells-and-whistles" class="text-blue-600 hover:underline">Bells and Whistles</a>
                         <ul class="ml-4 mt-2 space-y-1">
-                            <li><a href="#contrast" class="text-blue-600 hover:underline">Contrast</a></li>
-                            <li><a href="#white-balance" class="text-blue-600 hover:underline">White Balance</a></li>
+                            <li><a href="#border-cropping" class="text-blue-600 hover:underline">Automatic Border Cropping</a></li>
                         </ul>
                     </li>
+                    <li><a href="#conclusion" class="text-blue-600 hover:underline">Conclusion</a></li>
                 </ul>
             </div>
         </nav>
@@ -48,7 +47,7 @@
             <p class="text-xl mb-8">By Rhythm Seth</p>
 
             <div class="mb-12">
-                <img src="./resultImages/onionchurch_error.png" alt="Colorized Prokudin-Gorskii photo" class="w-full max-w-2xl mx-auto rounded-lg shadow-lg">
+                <img src="./resultImages/train_auto_border_crop.jpg" alt="Colorized Prokudin-Gorskii photo" class="w-full max-w-2xl mx-auto rounded-lg shadow-lg">
             </div>
 
             <section id="introduction" class="mb-12">
@@ -59,60 +58,53 @@
             <section id="single-scale-alignment" class="mb-12">
                 <h2 class="text-3xl font-semibold mb-4">Single-scale Alignment</h2>
                 <h3 id="approach" class="text-2xl font-semibold mb-2">Approach</h3>
-                <p class="mb-4">For the single-scale alignment, I implemented a comprehensive approach that involved several key steps and optimizations:
-                    Channel Splitting: The input image is split into three channels (blue, green, and red) using the split_channels function.
-                    Normalization: Each channel is normalized to ensure consistent intensity ranges across all channels.
-                    Edge Detection: I applied Sobel filters to detect edges in each channel, which helps in focusing on the structural elements of the image during alignment.
-                    Border Cropping: To mitigate edge effects, I implemented a border_crop function to remove the outer pixels of each channel before alignment.
-                    Alignment Function: The align function uses a search-based approach to find the best alignment between two channels:
-                    It iterates through a range of possible displacements (controlled by search_range).
-                    For each displacement, it applies the transformation using the transform function.
-                    The alignment quality is assessed using normalized cross-correlation.
-                    The displacement with the highest correlation score is selected as the best alignment.
-                    Transformation: The transform function applies the calculated displacements to shift the image channels using np.roll.
-                    Metric Experimentation: I experimented with different similarity metrics:
-                    L2 Norm (L2_Norm function)
-                    Normalized Cross-Correlation (norm_cross_correlation function)
-                    Hyperparameter Tuning
-                    I experimented with various hyperparameters to optimize the alignment process:
-                    Search Range: Increased from a default of 15 to 20 or higher to accommodate larger misalignments.
-                    Border Crop Size: Adjusted the crop size (e.g., 30 pixels) to balance between removing edge artifacts and preserving image content.
-                    Normalization Method: Tried different normalization approaches, including min-max normalization and division by maximum value.</p>
+                <p class="mb-4">For my single-scale implementation, I utilized a more straightforward approach, applying an alignment method directly to the original image without downsampling. I began by splitting the image into its red, green, and blue channels, then applied my alignment algorithm, which evaluates the pixel-wise difference between channels using a cross-correlation function. In this case, I opted for normalized cross-correlation (NCC) as it seemed more effective for this particular task, as opposed to the L2 norm.
+
+                    I trialed various optimizations, including edge detection using Sobel filters and border cropping, to focus the alignment process on the inner regions of the image and avoid artifacts from the borders. The search range for the alignment function was also expanded to improve accuracy, which allowed the algorithm to explore a broader set of possible displacements.
+                    
+                    In the end, this single-scale approach produced fairly accurate results for most images as are seen below.</p>
                 <h3 id="results" class="text-2xl font-semibold mb-2">Results</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <img src="./resultImages/cathedral_singlescale_result.png" alt="Result 1" class="w-full rounded-lg shadow-md">
-                    <img src="./resultImages/monastery_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
-                    <img src="./resultImages/tobolsk_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/out_cathedral.jpg" alt="Result 1" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/out_monastery.jpg" alt="Result 2" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/out_tobolsk.jpg" alt="Result 3" class="w-full rounded-lg shadow-md">
                 </div>
             </section>
 
             <section id="multi-scale-alignment" class="mb-12">
                 <h2 class="text-3xl font-semibold mb-4">Multi-scale Alignment</h2>
                 <h3 id="approach" class="text-2xl font-semibold mb-2">Approach</h3>
-                <p class="mb-4">For multi-scale alignment, I implemented a pyramid-based approach to handle larger images and improve efficiency:
-                    Image Pyramid: The build_pyramid function creates a multi-scale representation of each channel by successively downsampling the image.
-                    Pyramid Alignment: The pyramid_align function performs alignment at multiple scales:
-                    It starts with the smallest (coarsest) scale and progressively refines the alignment at larger scales.
-                    At each level, it uses the align function to find the best displacement.
-                    The displacement is scaled up for the next level and refined further.
-                    Edge Detection: Similar to the single-scale approach, Sobel filters are applied to highlight edges before alignment.
-                    Border Cropping: A more aggressive border cropping is applied to the larger images to remove potential artifacts.
-                    Iterative Refinement: The alignment process iterates through the pyramid levels, refining the displacement estimation at each step.
-                    Hyperparameter Tuning and Variations
-                    I experimented with several variations and hyperparameters in the multi-scale approach:
-                    Pyramid Levels: Adjusted the number of levels in the image pyramid (e.g., 5 levels) to balance between computational efficiency and alignment accuracy.
-                    Downscaling Factor: Used a factor of 0.5 for creating each level of the pyramid.
-                    Search Range: Varied the search range at different pyramid levels to allow for both coarse and fine adjustments.
-                    Border Crop Size: Experimented with different crop sizes, including a more aggressive crop for larger images (e.g., 100 pixels).
-                    Edge Detection Strength: Adjusted the Sobel filter parameters to optimize edge detection for alignment.</p>
-                <h3 id="results" class="text-2xl font-semibold mb-2">Results</h3>
+                <p class="mb-4">For handling the larger .tif images, I utilized an image-pyramid based approach to speed up the alignment process. The pyramid structure allowed the image to be processed at multiple scales, starting from coarsest at level 3 all the way down to the finest at level 0. I did this by downsampling the image pixels by 1/2 at every level and then applying my align function on the downscaled images to get the best displacement offsets for x and y.
+                    I trialled a variety of approaches including border cropping and applying the sobel, but in the end, I settled on just using the pyramid approach with the L2 norm as my score function instead of the NCC (as L2 seemed to be performing better for this task) and tuning hyperparameters for the number of levels and the iterative range for each align function call. 
+                    However, I noticed that most images seemed to have the green and red channels slightly misaligned with the blue. I counteracted this by manually shifting the x and y displacements I received from the pyramid approach before applying them to each channel.</p>
+                <h3 id="results-multi" class="text-2xl font-semibold mb-2">Results</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <img src="./resultImages/cathedral_singlescale_result.png" alt="Result 1" class="w-full rounded-lg shadow-md">
-                    <img src="./resultImages/monastery_singlescale_result.png" alt="Result 2" class="w-full rounded-lg shadow-md">
-                    <img src="./resultImages/tobolsk_singlescale_result.png" alt="Result 3" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/church_auto_border_crop.jpg" alt="Result 1" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/onion_church_auto_border_crop.jpg" alt="Result 2" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/lady_auto_border_crop.jpg" alt="Result 3" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/train_auto_border_crop.jpg" alt="Result 4" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/harvesters_auto_border_crop.jpg" alt="Result 4" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/emir_auto_border_crop.jpg" alt="Result 6" class="w-full rounded-lg shadow-md">
                 </div>
             </section>
-            
+
+            <section id="bells-and-whistles" class="mb-12">
+                <h2 class="text-3xl font-semibold mb-4">Bells and Whistles</h2>
+
+                <h3 id="border-cropping" class="text-2xl font-semibold mb-2">Automatic Border Cropping</h3>
+                <p class="mb-4">In some cases, images had visible black or white borders, which negatively impacted the alignment process. To address this, I implemented an automatic border cropping function that detects uniform regions at the borders and removes them. The function works by converting the image to grayscale and identifying areas where the pixel values fall below a set threshold, indicating uniformity. A bounding box is then calculated around the non-uniform pixels, and the image is cropped accordingly. This method worked well for removing unnecessary borders before alignment, resulting in cleaner, more accurate colorized images.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <img src="./resultImages/lady.jpg" alt="Before Border Cropping" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/lady_auto_border_crop.jpg" alt="After Border Cropping" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/three_generations.jpg" alt="Before Border Cropping" class="w-full rounded-lg shadow-md">
+                    <img src="./resultImages/three_generations.jpg" alt="After Border Cropping" class="w-full rounded-lg shadow-md">
+                </div>
+            </section>
+
+            <section id="conclusion" class="mb-12">
+                <h2 class="text-3xl font-semibold mb-4">Conclusion</h2>
+                <p class="mb-4">Overall, both the single-scale and multi-scale alignment methods performed well in reconstructing color images from the Prokudin-Gorskii photo collection. The multi-scale approach, in particular, excelled with larger, high-resolution images, reducing processing time while maintaining accuracy. Future improvements could include using a white balance algorithm to achieve more natural color reproduction, and experimenting with non-linear contrast adjustments for even better visual results.</p>
+            </section>
 
         </main>
     </div>
