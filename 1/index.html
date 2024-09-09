@@ -8,7 +8,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="flex">
-        <!-- Left Sidebar Navigation -->
         <nav class="w-64 bg-white h-screen fixed overflow-y-auto">
             <div class="p-4">
                 <h2 class="text-xl font-bold mb-4">Contents</h2>
@@ -18,17 +17,12 @@
                         <ul class="ml-4 mt-2 space-y-1">
                             <li><a href="#approach" class="text-blue-600 hover:underline">Approach</a></li>
                             <li><a href="#results" class="text-blue-600 hover:underline">Results</a></li>
-                            <li><a href="#custom-images" class="text-blue-600 hover:underline">Custom Images</a></li>
                         </ul>
                     </li>
                     <li><a href="#multi-scale-alignment" class="text-blue-600 hover:underline">Multi-scale Alignment</a>
                         <ul class="ml-4 mt-2 space-y-1">
                             <li><a href="#approach-multi" class="text-blue-600 hover:underline">Approach</a></li>
-                            <li><a href="#optimizations" class="text-blue-600 hover:underline">Optimizations</a></li>
                             <li><a href="#results-multi" class="text-blue-600 hover:underline">Results</a></li>
-                            <li><a href="#misalignments" class="text-blue-600 hover:underline">Misalignments</a></li>
-                            <li><a href="#custom-images-multi" class="text-blue-600 hover:underline">Custom Images</a></li>
-                            <li><a href="#offsets-multi" class="text-blue-600 hover:underline">Offsets</a></li>
                         </ul>
                     </li>
                     <li><a href="#bells-and-whistles" class="text-blue-600 hover:underline">Bells and Whistles</a>
@@ -52,7 +46,7 @@
 
             <section id="introduction" class="mb-12">
                 <h2 class="text-3xl font-semibold mb-4">Introduction</h2>
-                <p class="mb-4">For each subject in the Prokudin-Gorskii collection, three exposures were taken through a red, a green, and a blue filter. However, across these three channels, the images are not perfectly aligned, so a more intelligent algorithm is needed to produce the photographs in color. This project focuses on using single-scale and multi-scale algorithms to align both small and very large images from the collection. Additionally, methods of automatically contrasting and white-balancing the resulting color images were also explored.</p>
+                <p class="mb-4">For each subject in the Prokudin-Gorskii collection, three exposures were taken through a red, a green, and a blue filter. However, across these three channels, the images are not perfectly aligned, so a more intelligent algorithm is needed to produce the photographs in color. This project focuses on using single-scale and multi-scale algorithms to align both small and very large images from the collection. Additionally, methods of automatically border-cropping the resulting color images were also explored.</p>
             </section>
 
             <section id="single-scale-alignment" class="mb-12">
@@ -73,7 +67,7 @@
 
             <section id="multi-scale-alignment" class="mb-12">
                 <h2 class="text-3xl font-semibold mb-4">Multi-scale Alignment</h2>
-                <h3 id="approach" class="text-2xl font-semibold mb-2">Approach</h3>
+                <h3 id="approach-multi" class="text-2xl font-semibold mb-2">Approach</h3>
                 <p class="mb-4">For handling the larger .tif images, I utilized an image-pyramid based approach to speed up the alignment process. The pyramid structure allowed the image to be processed at multiple scales, starting from coarsest at level 3 all the way down to the finest at level 0. I did this by downsampling the image pixels by 1/2 at every level and then applying my align function on the downscaled images to get the best displacement offsets for x and y.
                     I trialled a variety of approaches including border cropping and applying the sobel, but in the end, I settled on just using the pyramid approach with the L2 norm as my score function instead of the NCC (as L2 seemed to be performing better for this task) and tuning hyperparameters for the number of levels and the iterative range for each align function call. 
                     However, I noticed that most images seemed to have the green and red channels slightly misaligned with the blue. I counteracted this by manually shifting the x and y displacements I received from the pyramid approach before applying them to each channel.</p>
@@ -92,7 +86,7 @@
                 <h2 class="text-3xl font-semibold mb-4">Bells and Whistles</h2>
 
                 <h3 id="border-cropping" class="text-2xl font-semibold mb-2">Automatic Border Cropping</h3>
-                <p class="mb-4">In some cases, images had visible black or white borders, which negatively impacted the alignment process. To address this, I implemented an automatic border cropping function that detects uniform regions at the borders and removes them. The function works by converting the image to grayscale and identifying areas where the pixel values fall below a set threshold, indicating uniformity. A bounding box is then calculated around the non-uniform pixels, and the image is cropped accordingly. This method worked well for removing unnecessary borders before alignment, resulting in cleaner, more accurate colorized images.</p>
+                <p class="mb-4">In some cases, images had visible black or white borders, which negatively impacted the alignment process. To address this, I implemented an automatic border cropping function that detects uniform regions at the borders and removes them. The function works by converting the image to grayscale and identifying areas where the pixel values fall below a set threshold, indicating uniformity. A bounding box is then calculated around the non-uniform pixels, and the image is cropped accordingly. This method worked well for removing unnecessary borders before alignment, resulting in cleaner, more accurate colorized images. In the images below, if you look carefully, you can see that the external white borders have been trimmed and the channels reposition very slightly, leading to a slightly better alignment and hence, a better colorized image.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <img src="./resultImages/lady.jpg" alt="Before Border Cropping" class="w-full rounded-lg shadow-md">
                     <img src="./resultImages/lady_auto_border_crop.jpg" alt="After Border Cropping" class="w-full rounded-lg shadow-md">
@@ -103,7 +97,7 @@
 
             <section id="conclusion" class="mb-12">
                 <h2 class="text-3xl font-semibold mb-4">Conclusion</h2>
-                <p class="mb-4">Overall, both the single-scale and multi-scale alignment methods performed well in reconstructing color images from the Prokudin-Gorskii photo collection. The multi-scale approach, in particular, excelled with larger, high-resolution images, reducing processing time while maintaining accuracy. Future improvements could include using a white balance algorithm to achieve more natural color reproduction, and experimenting with non-linear contrast adjustments for even better visual results.</p>
+                <p class="mb-4">Overall, both the single-scale and multi-scale alignment methods performed well in reconstructing color images from the Prokudin-Gorskii photo collection. The multi-scale approach, in particular, excelled with larger, high-resolution images, reducing processing time while maintaining accuracy. The automatic border cropping method also worked well in removing unnecessary borders before alignment, leading to cleaner, more accurate colorized images. Future improvements could include using a white balance algorithm to achieve more natural color reproduction, and experimenting with non-linear contrast adjustments for even better visual results.</p>
             </section>
 
         </main>
