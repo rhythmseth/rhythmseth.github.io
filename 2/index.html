@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 180 Project 2: Fun with Filters and Frequencies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 h-screen bg-gray-800 text-white fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold">CS 180 Project 2</h2>
+            </div>
+            <nav class="mt-6">
+                <a href="#introduction" class="block py-2 px-4 hover:bg-gray-700">Introduction</a>
+                <a href="#part1" class="block py-2 px-4 hover:bg-gray-700">Part 1: Fun with Filters!</a>
+                <div class="pl-6">
+                    <a href="#finite-difference" class="block py-2 px-4 hover:bg-gray-700">1.1 Finite Difference Operator</a>
+                    <a href="#dog-filter" class="block py-2 px-4 hover:bg-gray-700">1.2 Derivative of Gaussian (DoG) Filter</a>
+                </div>
+                <a href="#part2" class="block py-2 px-4 hover:bg-gray-700">Part 2: Fun with Frequencies</a>
+                <div class="pl-6">
+                    <a href="#image-sharpening" class="block py-2 px-4 hover:bg-gray-700">2.1 Image "Sharpening"</a>
+                    <a href="#hybrid-images" class="block py-2 px-4 hover:bg-gray-700">2.2 Hybrid Images</a>
+                    <a href="#gaussian-laplacian" class="block py-2 px-4 hover:bg-gray-700">2.3 Gaussian and Laplacian Stacks</a>
+                    <a href="#multi-resolution" class="block py-2 px-4 hover:bg-gray-700">2.4 Multi-resolution Blending</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="ml-64 p-8">
+            <h1 class="text-4xl font-bold mb-6">CS 180 Project 2: Fun with Filters and Frequencies</h1>
+            <p class="mb-4">By Rhythm Seth</p>
+
+            <section id="introduction" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Introduction</h2>
+                <p>This project explores various techniques for processing and combining images using frequency-based methods. We delve into image sharpening by emphasizing high frequencies, edge extraction using finite difference kernels, and the creation of hybrid images by combining high and low frequencies from different sources. Additionally, we experiment with image blending at various frequencies using Gaussian and Laplacian stacks.</p>
+            </section>
+
+            <section id="part1" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 1: Fun with Filters!</h2>
+
+                <h3 id="finite-difference" class="text-xl font-semibold mb-2">1.1 Finite Difference Operator</h3>
+            <p class="mb-4">In this section, we apply finite difference operators to extract edge information from images. We begin by computing the partial derivatives in both x and y directions using simple finite difference kernels:</p>
+
+            <p class="mb-4">
+                For x-direction: $$D_x = [-1, 1]$$<br>
+                For y-direction: $$D_y = [-1, 1]^T$$
+            </p>
+
+            <p class="mb-4">We convolve these operators with our image to obtain the discrete partial derivatives ∂I/∂x and ∂I/∂y. The gradient magnitude is then calculated as:</p>
+
+            <p class="mb-4">$$\nabla I = \sqrt{(\frac{\partial I}{\partial x})^2 + (\frac{\partial I}{\partial y})^2}$$</p>
+
+            <img src="./images/part1_1.png" alt="Edge map of cameraman image" class="mb-4">
+
+                <h3 id="dog-filter" class="text-xl font-semibold mb-2">1.2 Derivative of Gaussian (DoG) Filter</h3>
+                
+                <p class="mb-4">However, these basic finite difference operators are highly sensitive to noise, resulting in discrete-looking edges. To mitigate this, we introduce Gaussian smoothing before gradient computation. We apply a 10x10 Gaussian kernel with σ = 2 to the image before computing the gradient. To reduce noise sensitivity in edge detection, we implement the Derivative of Gaussian (DoG) filter. This approach combines Gaussian smoothing with edge detection in a single operation. This Gaussian pre-filtering results in significantly smoother edge detection compared to the non-Gaussian version. The detected edges appear more continuous and less affected by small-scale noise.</p>
+                
+                <img src="./images/part1_2.png" alt="DoG filter result" class="mb-4">
+
+                <p class="mb-4">We can achieve the same result more efficiently by convolving the Gaussian kernel with our difference operators first, then applying these combined kernels to the image. This approach, leveraging the commutative property of convolution, saves us an expensive image-wide convolution operation while producing identical results.</p>
+
+                <img src="./images/sameDoG.png" alt="Edge map of cameraman image" class="mb-4">
+
+            </section>
+
+
+            <section id="part2" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 2: Fun with Frequencies</h2>
+
+                <h3 id="image-sharpening" class="text-xl font-semibold mb-2">2.1 Image "Sharpening"</h3>
+<p class="mb-4">Image sharpening is achieved by separating an image into its low and high frequency components, then enhancing the high frequency details. This process involves the following steps:</p>
+
+<ol class="list-decimal list-inside mb-4">
+    <li>Apply a Gaussian filter to the original image to obtain the low frequency component.</li>
+    <li>Subtract the low frequency (Gaussian filtered) image from the original to isolate the high frequency details.</li>
+    <li>Add an amplified version of these high frequency details back to the original image.</li>
+</ol>
+
+<p class="mb-4">The mathematical formula for this sharpening process can be expressed as:</p>
+
+<p class="mb-4">$$I_{sharpened} = (α + 1) * I - α * (I * G)$$</p>
+
+<p class="mb-4">Where:</p>
+<ul class="list-disc list-inside mb-4">
+    <li>I is the original image</li>
+    <li>G is the Gaussian kernel</li>
+    <li>α is a parameter controlling the degree of sharpening</li>
+    <li>* denotes convolution</li>
+</ul>
+
+<p class="mb-4">We applied this sharpening technique to images of two iconic Indian monuments: the Taj Mahal and the Qutb Minar. The results demonstrate how this process can enhance the visibility of fine details:</p>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <img src="./images/taj_original.png" alt="Original Taj Mahal" class="mb-2">
+        <p class="text-center">Original Taj Mahal</p>
+    </div>
+    <div>
+        <img src="./images/taj_sharpened.png" alt="Sharpened Taj Mahal" class="mb-2">
+        <p class="text-center">Sharpened Taj Mahal</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <img src="./images/qutb_original.png" alt="Original Qutb Minar" class="mb-2">
+        <p class="text-center">Original Qutb Minar</p>
+    </div>
+    <div>
+        <img src="./images/qutb_sharpened.png" alt="Sharpened Qutb Minar" class="mb-2">
+        <p class="text-center">Sharpened Qutb Minar</p>
+    </div>
+</div>
+
+<p class="mb-4">As we can observe, the sharpening process significantly enhances the visibility of intricate details on both monuments. The architectural features, carvings, and textures become more prominent, allowing for a clearer appreciation of the craftsmanship involved in these historical structures.</p>
+                
+
+<h3 id="hybrid-images" class="text-xl font-semibold mb-2">2.2 Hybrid Images</h3>
+<p class="mb-4">Hybrid images are created by combining low frequencies from one image with high frequencies from another. This results in an image that appears different when viewed from near and far distances.</p>
+
+<p class="mb-4">To create a hybrid image, we follow these steps:</p>
+<ol class="list-decimal list-inside mb-4">
+    <li>Extract high frequencies from one image by subtracting a Gaussian-filtered version from the original.</li>
+    <li>Extract low frequencies from another image by applying a Gaussian filter.</li>
+    <li>Combine these two frequency components into a single image.</li>
+</ol>
+
+<h4 class="text-lg font-semibold mb-2">Example: Dog and Cat Hybrid</h4>
+<p class="mb-4">For this example, we created a hybrid image using a dog (low frequency) and a cat (high frequency). Before combining the images, we applied some preprocessing to align them better, including rotation and translation of the cat image.</p>
+
+<p class="mb-4">We then applied low-pass and high-pass filters to the dog and cat images respectively, using Gaussian kernels with different sigma values to control the cutoff frequencies.</p>
+
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <div>
+        <img src="./images/dog.jpg" alt="Original Dog" class="mb-2">
+        <p class="text-center">Original Dog Image</p>
+    </div>
+    <div>
+        <img src="./images/cat.jpg" alt="Original Cat" class="mb-2">
+        <p class="text-center">Original Cat Image</p>
+    </div>
+    <div>
+        <img src="./images/dog_cat_hybrid.png" alt="Dog-Cat Hybrid" class="mb-2">
+        <p class="text-center">Hybrid Image</p>
+    </div>
+</div>
+
+<h4 class="text-lg font-semibold mb-2">Interpreting the FFTs</h4>
+<p class="mb-4">We also visualized the Fourier transforms of the original images and the hybrid components:</p>
+
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <div>
+        <img src="./images/dog_fft.png" alt="Dog FFT" class="mb-2">
+        <p class="text-center">Dog Image FFT</p>
+    </div>
+    <div>
+        <img src="./images/cat_fft.png" alt="Cat FFT" class="mb-2">
+        <p class="text-center">Cat Image FFT</p>
+    </div>
+    <div>
+        <img src="./images/hybrid_fft.png" alt="Hybrid FFT" class="mb-2">
+        <p class="text-center">Hybrid Image FFT</p>
+    </div>
+</div>
+
+<p class="mb-4">Interpreting these FFTs:</p>
+<ul class="list-disc list-inside mb-4">
+    <li>The dog image FFT shows more energy concentrated in the center, indicating dominant low frequencies.</li>
+    <li>The cat image FFT has more energy spread out, representing higher frequency details.</li>
+    <li>The hybrid image FFT combines both characteristics: a bright center (from the dog) and spread-out energy (from the cat).</li>
+</ul>
+
+<p class="mb-4">This frequency domain representation explains why the hybrid image appears different at various distances. When viewed up close, the high-frequency details of the cat are visible. From a distance, these high frequencies become less perceptible, and the low-frequency structure of the dog dominates our perception.</p>
+
+<p class="mb-4">The hybrid image technique demonstrates how our visual system processes different spatial frequencies and how this processing changes with viewing distance. It's a fascinating example of how understanding and manipulating frequency components can create intriguing visual effects.</p>
+
+<p class="mb-4">Here are some more examples of hybrid images created using different image pairs:</p>
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <div>
+        <img src="./images/nutmeg.jpg" alt="Original Nutmeg" class="mb-2">
+        <p class="text-center">Original Nutmeg Image</p>
+    </div>
+    <div>
+        <img src="./images/derek.jpg" alt="Original Derek" class="mb-2">
+        <p class="text-center">Original Derek Image</p>
+    </div>
+    <div>
+        <img src="./images/nutmeg_and_derek_hybrid.png" alt="Nutmeg-Derek Hybrid" class="mb-2">
+        <p class="text-center">Hybrid Image</p>
+    </div>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <div>
+        <img src="./images/arnav_happy.jpg" alt="Original Arnav Smiling" class="mb-2">
+        <p class="text-center">Original Arnav Smiling Image</p>
+    </div>
+    <div>
+        <img src="./images/arnav_angry.jpg" alt="Original Arnav Serious" class="mb-2">
+        <p class="text-center">Original Arnav Serious Image</p>
+    </div>
+    <div>
+        <img src="./images/arnav_hybrid.png" alt="Arnav Smiling-Arnav Serious Hybrid" class="mb-2">
+        <p class="text-center">Hybrid Image</p>
+    </div>
+</div>
+<div class="grid grid-cols-3 gap-4 mb-4"></div>
+<h3 id="gaussian-laplacian" class="text-xl font-semibold mb-2">2.3 Gaussian and Laplacian Stacks</h3>
+
+<p class="mb-4">Now we move on to the problem of image blending. It's important to note that we're working with stacks rather than pyramids, so there's no downsampling of pixels involved. Instead, the downsampling effect in the stack is induced by increasing the sigma value for the Gaussian kernel.</p>
+
+<p class="mb-4">The Gaussian stack is created by applying the Gaussian kernel with increasing values of sigma to the same image. For our implementation, we used 5 levels, with sigma values doubling at each level (2^i for i from 0 to 4).</p>
+
+<p class="mb-4">Laplacian stacks are generated by differencing consecutive Gaussian filtered images: Lap[i] = Gauss[i+1] - Gauss[i].</p>
+
+<p class="mb-4">We applied this method to both the apple and orange images to prepare for the blending process. Below are the visualizations of the Laplacian and Gaussian stacks for both images:</p>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div>
+        <img src="./images/gaussian_and_laplacian_stacks.png" alt="Laplacian and Gaussian Stacks for Apple and Orange" class="w-full">
+        <p class="text-center">Apple and Orange Laplacian and Gaussian Stack</p>
+    </div>
+    <div>
+</div>
+</div>
+
+<p class="mb-4">In these visualizations, each column represents a different level of the stack, from the finest details (left) to the coarsest (right). For the Laplacian stacks, we've added a constant (0.4) and clipped the values to [0, 1] for better visualization, as Laplacian images often contain both positive and negative values.</p>
+
+<p class="mb-4">These stacks form the foundation for our multi-resolution blending technique, which we'll explore in the next section.</p>
+
+<h3 id="multi-resolution-blending" class="text-xl font-semibold mb-2">2.4 Multi-resolution Blending</h3>
+
+<p class="mb-4">Building upon our Gaussian and Laplacian stacks, we now implement multi-resolution blending to seamlessly combine images. This technique allows us to blend images at different frequency levels, resulting in smooth transitions between the source images.</p>
+
+<p class="mb-4">Our blending process involves the following steps:</p>
+<ol class="list-decimal list-inside mb-4">
+    <li>Create Gaussian and Laplacian stacks for both input images</li>
+    <li>Generate a mask and its Gaussian stack</li>
+    <li>Blend the Laplacian stacks using the Gaussian mask stack</li>
+    <li>Reconstruct the final blended image by collapsing the blended Laplacian stack</li>
+</ol>
+
+<p class="mb-4">We applied this blending technique to several image pairs, using both even (vertical split) and uneven masks:</p>
+
+<h4 class="text-lg font-semibold mb-2">1. Apple and Orange (Classic Example)</h4>
+<img src="./images/oraple.png" alt="Apple and Orange" class="mb-4">
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <img src="./images/apple.jpeg" alt="Apple" class="w-full">
+    <img src="./images/orange.jpeg" alt="Orange" class="w-full">
+    <img src="./images/blended_orange_apple.png" alt="Blended Apple-Orange" class="w-full">
+</div>
+
+
+<h4 class="text-lg font-semibold mb-2">2. Smiley Rhythm and Serious Rhythm</h4>
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <img src="./images/me_smiley.jpeg" alt="Smiley Rhythm" class="w-full">
+    <img src="./images/me_serious.jpeg" alt="Serious Rhythm" class="w-full">
+    <img src="./images/blended_rhythms.png" alt="Blended Rhythm" class="w-full">
+</div>
+
+<h4 class="text-lg font-semibold mb-2">3. Voldemort and Ralph Fiennes</h4>
+<div class="grid grid-cols-3 gap-4 mb-4">
+    <img src="./images/voldie.png" alt="Voldemort" class="w-full">
+    <img src="./images/ralphie.png" alt="Ralph Fiennes" class="w-full">
+    <img src="./images/blended_voldemort_ralph.png" alt="Blended Voldemort-Ralph" class="w-full">
+</div>
+
+<h4 class="text-lg font-semibold mb-2">4. Girlfriend and Mango (Uneven Mask)</h4>
+<p class="mb-4">As a special treat for my girlfriend who loves mangoes, I created a unique blend using an uneven mask:</p>
+<img src="./images/uneven_mask_process.png" alt="Process of making Blended Girlfriend-Mango" class="w-full mb-4">
+
+<p class="mb-4">For this last example, I created a custom, uneven mask using an iPad to achieve a more artistic and personalized blend. The result showcases how multi-resolution blending can create seamless transitions even with complex, non-linear boundaries between images.</p>
+
+<p class="mb-4">These examples demonstrate the versatility of multi-resolution blending in creating visually intriguing composites. The technique effectively combines images at various frequency levels, resulting in smooth transitions that maintain the detailed features of both source images.</p>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>
