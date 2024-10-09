@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 180 Project 3: Face Morphing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 h-screen bg-gray-800 text-white fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold">CS 180 Project 3</h2>
+            </div>
+            <nav class="mt-6">
+                <a href="#overview" class="block py-2 px-4 hover:bg-gray-700">Overview</a>
+                <a href="#part1" class="block py-2 px-4 hover:bg-gray-700">Part 1: Defining Correspondences</a>
+                <a href="#part2" class="block py-2 px-4 hover:bg-gray-700">Part 2: Computing the "Mid-way Face"</a>
+                <a href="#part3" class="block py-2 px-4 hover:bg-gray-700">Part 3: The Morph Sequence</a>
+                <a href="#part4" class="block py-2 px-4 hover:bg-gray-700">Part 4: The "Mean Face" of a Population</a>
+                <a href="#part5" class="block py-2 px-4 hover:bg-gray-700">Part 5: Caricatures</a>
+                <a href="#conclusion" class="block py-2 px-4 hover:bg-gray-700">Conclusion</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="ml-64 p-8">
+            <h1 class="text-4xl font-bold mb-6">CS 180 Project 3: Face Morphing</h1>
+            <p class="mb-4">By Rhythm Seth</p>
+
+            <section id="overview" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+                <p class="mb-4">This project explores face morphing techniques, including creating smooth transitions between faces, computing average faces, and generating caricatures. We'll go through several steps to achieve these fascinating visual effects.</p>
+                <div class="flex justify-center mb-4">
+                    <img src="./images/morph.gif" alt="Face Morphing Animation" class="max-w-full h-auto">
+                </div>
+            
+            </section>
+
+            <section id="part1" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 1: Defining Correspondences</h2>
+                <p class="mb-4">In this initial step, we manually defined corresponding points on two images: Arnav's face (Image A) and Arush's face (Image B). These points mark key facial features like eyes, nose, mouth, and chin. We used the custom provided tool to select these points, ensuring consistent labeling across both images.</p>
+                <p class="mb-4">After defining the points, we computed a Delaunay triangulation to create a mesh over the faces. This triangulation is crucial for the warping process in later steps.</p>
+                <div class="flex justify-center mb-4">
+                    <img src="./images/arnav.png" alt="Image A" class="mr-4" width="400" height="600">
+                    <img src="./images/arush.png" alt="Image B" width="400" height="600">
+                </div>
+                
+                <div class="flex justify-center">
+                    <img src="./images/delaunayOfAverage.png" alt="Delaunay triangulation of midway face of Arnav and Arush" class="mb-4" width="400" height="300">
+                </div>
+            </section>
+
+            <section id="part2" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 2: Computing the "Mid-way Face"</h2>
+                <p class="mb-4">The mid-way face represents the halfway point between two faces. To compute this:</p>
+                <ol class="list-decimal list-inside mb-4">
+                    <li>We calculated the average shape by taking the mean of corresponding points from both faces.</li>
+                    <li>We warped both original images into this average shape.</li>
+                    <li>Finally, we averaged the colors of the warped images.</li>
+                </ol>
+                <p class="mb-4">The key to this process was implementing an affine warp for each triangle in our mesh.</p>
+                <img src="./images/midway_face.jpg" alt="Mid-way Face" class="mb-4" width="400" height="300">
+            </section>
+
+            <section id="part3" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 3: The Morph Sequence</h2>
+                <p class="mb-4">We extended the mid-way face concept to create a full morph sequence. This involved implementing a morph function that produces intermediate frames between two images, controlling both shape warping and color blending independently.</p>
+                <p class="mb-4">The result is a smooth transition from one face to another, demonstrated in the following video:</p>
+                <img src="./images/morph.gif" alt="Morph Sequence" class="mb-4">
+            </section>
+
+            <section id="part4" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 4: The "Mean Face" of a Population</h2>
+                <p class="mb-4">We extended our morphing techniques to compute the average face of a population. Using the Danes Dataset, we:</p>
+                <ol class="list-decimal list-inside mb-4">
+                    <li>Computed the average face shape of the population.</li>
+                    <li>Morphed each face in the dataset to this average shape.</li>
+                    <li>Computed the average face by blending all morphed faces.</li>
+                    <li>We repeated this process for the entire dataset, just for the males in the dataset and for just the females in the dataset.</li>
+                </ol>
+                <img src="./images/average_faces.png" alt="Mean Faces for Full Danes Dataset, Only Males, Only Females" class="mb-4">
+                <img src="./images/morphed_faces1.png" alt="Morphed Images" class="mb-4">
+                <img src="./images/morphed_faces2.png" alt="Morphed Images" class="mb-4">
+            </section>
+
+            <section id="part5" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 5: Caricatures: Extrapolating from the Mean</h2>
+                <p class="mb-4">Finally, we created caricatures by exaggerating the differences between individual faces and the population mean. This process amplifies the unique characteristics of a face, resulting in a humorous or exaggerated representation.</p>
+                <img src="path_to_caricature_image.jpg" alt="Caricature" class="mb-4">
+            </section>
+
+            <section id="conclusion" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Conclusion</h2>
+                <p class="mb-4">This face morphing project demonstrates the power of image processing techniques in creating smooth transitions between faces, computing average faces, and generating caricatures. These techniques have applications in various fields, from entertainment and art to forensics and anthropology.</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
