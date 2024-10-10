@@ -21,6 +21,7 @@
                 <a href="#part3" class="block py-2 px-4 hover:bg-gray-700">Part 3: The Morph Sequence</a>
                 <a href="#part4" class="block py-2 px-4 hover:bg-gray-700">Part 4: The "Mean Face" of a Population</a>
                 <a href="#part5" class="block py-2 px-4 hover:bg-gray-700">Part 5: Caricatures</a>
+                <a href="#part6" class="block py-2 px-4 hover:bg-gray-700">Part 5: Bells and Whistles</a>
                 <a href="#conclusion" class="block py-2 px-4 hover:bg-gray-700">Conclusion</a>
             </nav>
         </aside>
@@ -42,7 +43,7 @@
             <section id="part1" class="mb-8">
                 <h2 class="text-2xl font-semibold mb-4">Part 1: Defining Correspondences</h2>
                 <p class="mb-4">In this initial step, we manually defined corresponding points on two images: Arnav's face (Image A) and Arush's face (Image B). These points mark key facial features like eyes, nose, mouth, and chin. We used the custom provided tool to select these points, ensuring consistent labeling across both images.</p>
-                <p class="mb-4">After defining the points, we computed a Delaunay triangulation to create a mesh over the faces. This triangulation is crucial for the warping process in later steps.</p>
+                <p class="mb-4">After defining the points, we computed a Delaunay triangulation to create a mesh over the faces. This triangulation is crucial for the warping process in later steps. scipy.spatial.Delaunay was used to triangulate each image, producing tri.</p>
                 <div class="flex justify-center mb-4">
                     <img src="./images/arnav.png" alt="Image A" class="mr-4" width="400" height="600">
                     <img src="./images/arush.png" alt="Image B" width="400" height="600">
@@ -56,11 +57,27 @@
             <section id="part2" class="mb-8">
                 <h2 class="text-2xl font-semibold mb-4">Part 2: Computing the "Mid-way Face"</h2>
                 <p class="mb-4">The mid-way face represents the halfway point between two faces. To compute this:</p>
-                <ol class="list-decimal list-inside mb-4">
-                    <li>We calculated the average shape by taking the mean of corresponding points from both faces.</li>
-                    <li>We warped both original images into this average shape.</li>
-                    <li>Finally, we averaged the colors of the warped images.</li>
-                </ol>
+                <p class="mb-4">To compute the midway face, we follow these key steps:</p>
+
+    <ol class="list-decimal list-inside mb-4">
+        <li>We start with two images and their corresponding facial landmark points.</li>
+        <li>We calculate the average shape by taking the mean of corresponding points from both faces.</li>
+        <li>For each triangle in the Delaunay triangulation of the face:</li>
+        <ul class="list-disc list-inside ml-8 mb-2">
+            <li>We compute an affine transformation that maps the triangle from the source image to the average shape.</li>
+            <li>We store this transformation for later use.</li>
+        </ul>
+        <li>We then perform an inverse warp:</li>
+        <ul class="list-disc list-inside ml-8 mb-2">
+            <li>For each pixel in the output image, we determine which triangle it belongs to.</li>
+            <li>We apply the inverse of the stored affine transformation to find the corresponding pixel in the source image.</li>
+            <li>We use either nearest neighbor or bilinear interpolation to sample the color from the source image.</li>
+        </ul>
+        <li>This process effectively warps the source image to match the geometry of the average face shape.</li>
+        <li>By repeating this process for both input images and then averaging the results, we obtain the midway face.</li>
+    </ol>
+
+<p class="mb-4">This method ensures a smooth transition between facial features while maintaining a realistic appearance. The use of affine transformations for each triangle allows for local deformations that can accurately map one face shape to another.</p>
                 <p class="mb-4">The key to this process was implementing an affine warp for each triangle in our mesh.</p>
                 <img src="./images/midway_face.jpg" alt="Mid-way Face" class="mb-4" width="400" height="300">
             </section>
@@ -78,18 +95,67 @@
                 <ol class="list-decimal list-inside mb-4">
                     <li>Computed the average face shape of the population.</li>
                     <li>Morphed each face in the dataset to this average shape.</li>
-                    <li>Computed the average face by blending all morphed faces.</li>
                     <li>We repeated this process for the entire dataset, just for the males in the dataset and for just the females in the dataset.</li>
                 </ol>
                 <img src="./images/average_faces.png" alt="Mean Faces for Full Danes Dataset, Only Males, Only Females" class="mb-4">
+
+                <p class="mb-4">Now we warp all the images in our dataset to the average shape of the entire population. Shown below are some of the examples of what happens to the faces in the dataset.</p>
                 <img src="./images/morphed_faces1.png" alt="Morphed Images" class="mb-4">
                 <img src="./images/morphed_faces2.png" alt="Morphed Images" class="mb-4">
-            </section>
 
+                <p class="mb-4">We now warp both images into each others' geometry to visualize what happens when we morph just the shapes.</p>
+                <div class="flex justify-center mb-4">
+                    <img src="./images/warped_arnav_onto_average.png" alt="Arnav with Average Geometry">
+                    <img src="./images/warped_average_onto_arnav.png" alt="Average with Arnav Geometry">
+                </div>
+            </section>
+            
             <section id="part5" class="mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Part 5: Caricatures: Extrapolating from the Mean</h2>
-                <p class="mb-4">Finally, we created caricatures by exaggerating the differences between individual faces and the population mean. This process amplifies the unique characteristics of a face, resulting in a humorous or exaggerated representation.</p>
-                <img src="path_to_caricature_image.jpg" alt="Caricature" class="mb-4">
+                <h2 class="text-2xl font-semibold mb-4">Part 5: Caricatures</h2>
+                <p class="mb-4">After computing the shape of the average face, we create caricatures by extrapolating from the mean. This process exaggerates the differences between an individual face and the average face, resulting in a caricature. The extrapolation is accomplished using the following formula:</p>
+
+<div class="mb-4">
+    \[
+    \text{caricature} = \alpha \cdot (\text{img1} - \text{avg}) + \text{avg}
+    \]
+</div>
+
+<p class="mb-4">Where:</p>
+<ul class="list-disc list-inside mb-4">
+    <li>\(\text{img1}\) represents the individual face</li>
+    <li>\(\text{avg}\) is the average face</li>
+    <li>\(\alpha\) (alpha) is the exaggeration factor</li>
+</ul>
+
+<p class="mb-4">This formula amplifies the differences in shape between the individual face and the average face. By adjusting the value of \(\alpha\), we can control the degree of exaggeration in the caricature. A larger \(\alpha\) value results in a more pronounced caricature effect.</p>
+                <img src="./images/caricature1.png" alt="Caricatures for Full Danes Dataset, Only Males, Only Females" class="mb-4">
+
+            <section id="part6" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part 6: Bells and Whistles: Changing Arnav's Gender using Average South Indian Female Face</h2>
+                <p class="mb-4">In this part, we created a morph of Arnav and the average South Indian Female Face. We then manipulated the geometry of both faces onto each other, and then created a caricature of the female's face. We also generated a gif showing the morphing process.</p>
+            
+                <div class="flex justify-center mb-4">
+                    <img src="./images/arnav_ss_rescaled.png" alt="arnav" class="mr-4" width="400" height="300">
+                    <img src="./images/indian_female_rescaled.png" alt="south indian female average face" width="400" height="300">
+                </div>
+            
+                <p class="mb-4">We now warp both images into each others' geometry to visualize what happens when we morph just the shapes.</p>
+            
+                <div class="flex justify-center mb-4">
+                    <img src="./images/arnav_warped_onto_female.png" alt="arnav warped into female's geometry" class="mr-4" width="400" height="300">
+                    <img src="./images/female_warped_onto_arnav.png" alt="female warped into arnav's geometry" width="400" height="300">
+                </div>
+            
+                <p class="mb-4">We also generated some caricatures using the same techniques as previously, as shown below.</p>
+            
+                <div class="flex justify-center mb-4">
+                    <img src="./images/caricature2.png" alt="Caricature" class="mr-4" width="400" height="300">
+                    <img src="./images/caricature3.png" alt="Caricature" width="400" height="300">
+                </div>
+
+                <div class="flex justify-center mb-4">
+                    <img src="./images/morph_3.gif" alt="Morph from Arnav to Indian Female" class="mr-4" width="400" height="300">
+                </div>
             </section>
 
             <section id="conclusion" class="mb-8">
