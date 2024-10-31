@@ -16,10 +16,16 @@
             </div>
             <nav class="mt-6">
                 <a href="#overview" class="block py-2 px-4 hover:bg-gray-700">Overview</a>
+                <h3 class="px-4 py-2 text-gray-400">Part A</h3>
                 <a href="#part1" class="block py-2 px-4 hover:bg-gray-700">Part 1: Recover Homographies</a>
                 <a href="#part2" class="block py-2 px-4 hover:bg-gray-700">Part 2: Warp the Images</a>
                 <a href="#part3" class="block py-2 px-4 hover:bg-gray-700">Part 3: Rectification</a>
-                <a href="#part4" class="block py-2 px-4 hover:bg-gray-700">Part 4: Blend the Images into a Mosaic</a>
+                <a href="#part4" class="block py-2 px-4 hover:bg-gray-700">Part 4: Blend the Images</a>
+                <h3 class="px-4 py-2 text-gray-400">Part B</h3>
+                <a href="#corner-detection" class="block py-2 px-4 hover:bg-gray-700">Corner Detection</a>
+                <a href="#feature-descriptors" class="block py-2 px-4 hover:bg-gray-700">Feature Descriptors</a>
+                <a href="#feature-matching" class="block py-2 px-4 hover:bg-gray-700">Feature Matching</a>
+                <a href="#auto-mosaics" class="block py-2 px-4 hover:bg-gray-700">Autostitched Mosaics</a>
             </nav>
         </aside>
 
@@ -167,6 +173,167 @@
                     </figure>
                 </div>
             </section>
+            <section id="partB" class="mt-12 mb-8">
+                <h1 class="text-3xl font-bold mb-6">Part B: Automatic Feature Detection and Matching</h1>
+                
+                <section id="corner-detection" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Corner Detection</h2>
+                    <p class="mb-4">Implementation of Harris Corner Detection with Adaptive Non-Maximum Suppression (ANMS) to select 600 points.</p>
+                    
+                    <h3 class="text-xl font-semibold mb-3">Approach</h3>
+                    <p class="mb-4">The corner detection process involves:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Using Harris corner detection algorithm to get scores h for each pixel</li>
+                        <li>Extracting scores into a vector: scores = h[corners[:, 0], corners[:, 1]]</li>
+                        <li>Implementing ANMS to identify strongest corners while maintaining even distribution</li>
+                        <li>Calculating pairwise distances using dist2()</li>
+                        <li>Using numpy broadcasting for f(x_i) < c_robust * f(x_j) comparison</li>
+                        <li>Creating masked distances and calculating minimum radii</li>
+                        <li>Sorting corners by decreasing radii and selecting best 600 corners</li>
+                    </ul>
+                    
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/harris_house1.png" alt="All Corners" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">All Detected Harris Corners - image 1</figcaption>
+                            <img src="./images/harris_house2.png" alt="All Corners" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">All Detected Harris Corners - image 2</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/ANMS_house1.png" alt="ANMS Corners" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">After ANMS - image 1 (600 points)</figcaption>
+                            <img src="./images/ANMS_house2.png" alt="ANMS Corners" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">After ANMS - image 2 (600 points)</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="feature-descriptors" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Feature Descriptors</h2>
+                    <h3 class="text-xl font-semibold mb-3">Approach</h3>
+                    <p class="mb-4">For each corner in points obtained from ANMS:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Extract 40x40 region feature around the point from original color image</li>
+                        <li>Resize to 8x8 using skimage.transform.resize</li>
+                        <li>Normalize by subtracting mean and dividing by standard deviation for each channel</li>
+                        <li>Flatten and stack into matrix</li>
+                    </ul>
+                    
+                    <div class="flex justify-center mb-4">
+                        <figure class="text-center">
+                            <img src="./images/features_house.png" alt="Feature Descriptors" class="max-w-full h-auto" width="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Example 8x8 Feature Descriptors</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="feature-matching" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Feature Matching</h2>
+                    <h3 class="text-xl font-semibold mb-3">Approach</h3>
+                    <p class="mb-4">The matching process involves:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Calculate pairwise differences between feature descriptors</li>
+                        <li>Compute sum-squared differences (SSD)</li>
+                        <li>Calculate Lowe scores using 2-NN distances</li>
+                        <li>Filter matches using threshold</li>
+                        <li>Pair corresponding features between images</li>
+                    </ul>
+
+                    <div class="flex justify-center mb-4">
+                        <figure class="text-center">
+                            <img src="./images/feature_matches_house.png" alt="Feature Matches" class="max-w-full h-auto" width="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Feature Matches Between Images</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="ransac" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Random Sample Consensus (RANSAC)</h2>
+                    <h3 class="text-xl font-semibold mb-3">Approach</h3>
+                    <p class="mb-4">RANSAC implementation steps:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Sample four points without replacement</li>
+                        <li>Compute homography using sampled points</li>
+                        <li>Transform all source points</li>
+                        <li>Calculate Euclidean distances to targets</li>
+                        <li>Identify inliers within threshold</li>
+                        <li>Update best set when more inliers found</li>
+                    </ul>
+
+                    <div class="flex justify-center mb-4">
+                        <figure class="text-center">
+                            <img src="./images/numbered_matches_house.png" alt="RANSAC Results" class="max-w-full h-auto" width="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">RANSAC Inliers</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4">
+                        <figure class="text-center">
+                            <img src="./images/house_warped_ransac_homography.png" alt="RANSAC Results" class="max-w-full h-auto" width="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Warped House using Ransac Homography</figcaption>
+                        </figure>
+                    </div>
+                </section>
+
+                <section id="auto-mosaics" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Autostitched Mosaics</h2>
+                    <h3 class="text-xl font-semibold mb-3">Results</h3>
+                    <p class="mb-4">Comparison between manual and automatic stitching:</p>
+                    
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/panorama.jpg" alt="Manual Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Manual Stitching</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/automatic_stitched_house.png" alt="Auto Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Automatic Stitching</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/panorama2.jpg" alt="Manual Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Manual Stitching</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/autostitched_arnav.png" alt="Auto Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Automatic Stitching</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/panorama3_L2Distance.jpg" alt="Manual Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Manual Stitching</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/autostitched_tv.png" alt="Auto Stitching" class="max-w-full h-auto" width="300">
+                            <figcaption class="mt-2 text-sm text-gray-600">Automatic Stitching</figcaption>
+                        </figure>
+                    </div>
+
+                    <p class="mb-4">Key observations:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Slightly less accurate than manual correspondences for some feature matches but much more efficient</li>
+                        <li>Limited control over feature selection</li>
+                        <li>Some misalignments in specific areas (chairs, walls, windows)</li>
+                    </ul>
+                </section>
+
+                <section id="reflection" class="mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Reflection</h2>
+                    <p class="mb-4">Key insights from the project:</p>
+                    <ul class="list-disc ml-6 mb-4">
+                        <li>Understanding homography matrix transformations and chaining</li>
+                        <li>Implementing efficient feature descriptor matching using broadcasting</li>
+                        <li>Visualizing algorithm-chosen features versus human-chosen features</li>
+                        <li>Comparing automatic versus manual stitching results</li>
+                    </ul>
+                    <p> Overall this project was a great learning experience and helped me really unpack homographies, warping between geometries and how we can use basic math to achieve a task that sounds so impossible.</p>
+                </section>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
         </main>
     </div>
 </body>
