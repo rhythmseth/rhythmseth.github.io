@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 180 Project 5: Diffusion Models</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 h-screen bg-gray-800 text-white fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold">CS 180 Project 5</h2>
+            </div>
+            <nav class="mt-6">
+                <a href="#overview" class="block py-2 px-4 hover:bg-gray-700">Overview</a>
+                <h3 class="px-4 py-2 text-gray-400">Part A: Fun with Diffusion Models!</h3>
+                <a href="#Setup" class="block py-2 px-4 hover:bg-gray-700">Setup</a>
+                <a href="#forward-process" class="block py-2 px-4 hover:bg-gray-700">1.1 Forward Process</a>
+                <a href="#classical-denoising" class="block py-2 px-4 hover:bg-gray-700">1.2 Classical Denoising</a>
+                <a href="#one-step-denoising" class="block py-2 px-4 hover:bg-gray-700">1.3 One-Step Denoising</a>
+                <a href="#iterative-denoising" class="block py-2 px-4 hover:bg-gray-700">1.4 Iterative Denoising</a>
+                <a href="#sampling" class="block py-2 px-4 hover:bg-gray-700">1.5 Diffusion Model Sampling</a>
+                <a href="#cfg" class="block py-2 px-4 hover:bg-gray-700">1.6 Classifier-Free Guidance</a>
+                <a href="#image-translation" class="block py-2 px-4 hover:bg-gray-700">1.7 Image-to-Image Translation, Inpainting, and Text-Conditional Image-to-image Translation</a>
+                <a href="#visual-anagrams" class="block py-2 px-4 hover:bg-gray-700">Visual Anagrams</a>
+                <a href="#hybrid-images" class="block py-2 px-4 hover:bg-gray-700">Hybrid Images</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="ml-64 p-8">
+            <h1 class="text-4xl font-bold mb-6">CS 180 Project 5: Diffusion Models</h1>
+            <p class="mb-4">By [Your Name]</p>
+        
+            <section id="overview" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+                <p class="mb-4">This project explores the implementation and applications of diffusion models, from basic noise addition to advanced image manipulation techniques. Using a random seed of 180, we investigated various aspects of diffusion models including denoising, sampling, and image translation.</p>
+            </section>
+        
+            <section id="Setup" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Setup</h2>
+                <p class="mb-4">Initial experiments with different inference steps demonstrated the model's capabilities. Looking at the three sets of images with different inference steps (5, 20, and 50), we can observe that with more inference steps, the generated images become significantly clearer and more detailed. The progression shows that with 5 steps the images appear rough and noisy, but as we increase to 20 and then 50 steps, the images gain better definition, smoother transitions, and more refined details, particularly visible in the winter landscape scenes, portrait photos, and rocket illustrations</p>
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <h3 class="font-semibold">5 Steps</h3>
+                        <img src="./images/sampling1_5steps.png" alt="5 steps inference" class="mb-2">
+                        <img src="./images/sampling2_5steps.png" alt="5 steps inference" class="mb-2">
+                        <img src="./images/sampling3_5steps.png" alt="5 steps inference" class="mb-2">
+                    </div>
+                    <div>
+                        <h3 class="font-semibold">20 Steps</h3>
+                        <img src="./images/sampling1_20steps.png" alt="20 steps inference" class="mb-2">
+                        <img src="./images/sampling2_20steps.png" alt="20 steps inference" class="mb-2">
+                        <img src="./images/sampling3_20steps.png" alt="20 steps inference" class="mb-2">
+                    </div>
+                    <div>
+                        <h3 class="font-semibold">50 Steps</h3>
+                        <img src="./images/sampling1_50steps.png" alt="50 steps inference" class="mb-2">
+                        <img src="./images/sampling2_50steps.png" alt="50 steps inference" class="mb-2">
+                        <img src="./images/sampling3_50steps.png" alt="50 steps inference" class="mb-2">
+                    </div>
+                </div>
+            </section>
+        
+            <section id="forward-process" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.1 Forward Process</h2>
+                <p class="mb-4">Implemented the forward process using the equation:</p>
+                <div class="mb-4">
+                    \[ x_t = \sqrt{\bar{\alpha}_t}x_0 + \sqrt{1 - \bar{\alpha}_t}\epsilon \text{ where } \epsilon \sim N(0,1) \]
+                </div>
+                <p class="mb-4">The forward function systematically corrupts a clean image by adding controlled amounts of Gaussian noise while simultaneously scaling down the original image's influence. For the Campanile image, we can observe this corruption process across three critical timesteps: At t=250, while the tower's basic structure remains visible, random colored noise begins to interfere with the image clarity, particularly noticeable in the sky and around the tower's edges. Moving to t=500, the degradation becomes more severe - the Campanile's distinctive shape is significantly obscured, with the noise patterns creating a colorful static that makes architectural details difficult to discern. Finally, at t=750, the image has almost completely succumbed to random noise, with only the faintest ghost-like outline of the tower barely visible through a dense field of multicolored pixels. This progression demonstrates how the forward process gradually transforms a clear, structured image into increasingly random noise patterns, effectively "forgetting" the original image's information in a controlled manner.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/campanile.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Original Image of the Campanile</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_250.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noise Level 250</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_500.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noise Level 500</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_750.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noise Level 750</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="classical-denoising" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.2 Classical Denoising</h2>
+                <p class="mb-4">Applied Gaussian blur filtering to denoise images at timesteps [250, 500, 750]. Results showed limitations of classical methods in handling complex noise patterns.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.1_250.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=250</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_500.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=500</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_750.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=750</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.2_250.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Gaussian Blur Denoising at t=250</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.2_500.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Gaussian Blur Denoising at t=500</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.2_750.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Gaussian Blur Denoising at t=750</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="one-step-denoising" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.3 One-Step Denoising</h2>
+                <p class="mb-4">Utilized the pretrained UNet model to estimate and remove noise in a single step. Results demonstrated significant improvement over classical methods.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.1_250.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=250</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_500.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=500</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.1_750.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">t=750</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.3_250.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">One Step Denoising at t=250</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.3_500.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">One Step Denoising at t=500</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.3_750.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">One Step Denoising at t=750</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="iterative-denoising" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.4 Iterative Denoising</h2>
+                <p class="mb-4">The iterative denoising process demonstrates how diffusion models can effectively restore images through multiple steps, starting from highly noisy states. Using a stride of 30 timesteps from 990 down to 0, we can observe the gradual improvement in image quality as the model progressively removes noise. When starting at timestep, the process shows remarkable improvement over single-step denoising or classical Gaussian blurring methods. Each denoising iteration applies a careful balance of noise removal and signal preservation, guided by the model's learned understanding of natural images. The results clearly show how multiple smaller denoising steps produce significantly better results than attempting to denoise in a single large step, with the final image retaining more detail and natural characteristics of the original image.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/iterative_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noisy Campanile at t=690</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/iterative_2.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noisy Campanile at t=540</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/iterative_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noisy Campanile at t=390</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/iterative_4.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noisy Campanile at t=240</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/iterative_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Noisy Campanile at t=90</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/iterative_6.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Iteratively Denoised Campanile</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/campanile.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Original Image</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/gaussian_blurred.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Gaussian Blurred Campanile</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="sampling" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.5 Diffusion Model Sampling</h2>
+                <p class="mb-4">The model, guided by the prompt "a high quality photo," gradually transforms random noise into a coherent image by repeatedly estimating and removing noise, using learned patterns from its training data. Each step in the denoising process brings the image closer to the natural image manifold while maintaining consistency with the text prompt. This demonstrates how diffusion models can create meaningful structure from pure randomness through a series of small, controlled steps that gradually increase the signal-to-noise ratio until a clear image emerges.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.5_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.5_2.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 2</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.5_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.5_4.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 4</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.5_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 5</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="cfg" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.6 Classifier-Free Guidance</h2>
+                <p class="mb-4">Classifier-Free Guidance (CFG) enhances image generation by combining two different noise estimates: a conditional estimate based on the given prompt ("a high quality photo") and an unconditional estimate using an empty prompt (""). The process uses a scaling factor (cfg_scale) to blend these estimates according to the formula: noise_est = noise_est_uncond + cfg_scale * (noise_est_cond - noise_est_uncond). When cfg_scale > 1, we amplify the difference between conditional and unconditional estimates, which tends to produce higher quality images that more strongly align with the prompt. The iterative_denoise_cfg function implements this by running the UNet model twice at each denoising step - once with the prompt embeddings and once with null embeddings - then combining their predictions using the CFG formula before proceeding with the denoising step. This dual prediction approach helps the model generate images that are both high quality and more faithful to the desired prompt. We used a cfg_scale of 7 for these images below:</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.6_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.6_2.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 2</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.6_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.6_4.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 4</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.6_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Sample 5</figcaption>
+                    </figure>
+                </div>
+            </section>
+        
+            <section id="image-translation" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">1.7 Image Translation and Conditioning</h2>
+                <p class="mb-4">Explored SDEdit-style image editing with varying noise levels [1, 3, 5, 7, 10, 20] and text conditioning.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=5</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=7</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=10</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_campanile_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile at i_start=20</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/campanile.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Campanile (original)</figcaption>
+                    </figure>
+                </div>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=5</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=7</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=10</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=20</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 (original)</figcaption>
+                    </figure>
+                </div>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 at i_start=3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 at i_start=5</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 at i_start=7</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 at i_start=10</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 at i_start=20</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_drawn2.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 2 (original)</figcaption>
+                    </figure>
+                </div>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hand-drawn Image 1 at i_start=1</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image at i_start=3</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image at i_start=5</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image at i_start=7</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image at i_start=10</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.7_qutb_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image at i_start=20</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/qutb.png" alt="Original Image" class="max-w-full h-auto" width="400" height="400">
+                        <figcaption class="mt-2 text-sm text-gray-600">Web Image (original)</figcaption>
+                    </figure>
+                </div>
+                <p class="mb-4">Now we explored inpainting. Inpainting with diffusion models allows us to selectively modify parts of an image while preserving the rest. The process involves using a binary mask to specify which areas to edit (mask=1) and which to preserve (mask=0). At each denoising step, we generate new content for the masked regions while keeping the unmasked regions identical to the original image, adding the appropriate amount of noise for each timestep. This creates a seamless blend between the preserved and generated parts of the image.
+                    Below are the results of applying inpainting to our images:</p>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/campanile.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Campanile</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/campanile_mask.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Mask for Campanile</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/campanile_toReplace.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Area to replace</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/campanile_inpainted.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Campanile Inpainted</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/qutb.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Qutb Minar</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/qutb_mask.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Mask for Qutb</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/qutb_toReplace.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Area to replace</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/qutb_inpainted.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Qutb Inpainted</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/taj.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Taj Mahal</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/taj_mask.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Mask for Campanile</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/taj_toReplace.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Area to replace</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/taj_inpainted.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Taj Inpainted</figcaption>
+                        </figure>
+                    </div>
+                    <p class="mb-4">We also tried applying text-conditioned image to image translation. For the images of the campanile we used the prompt "a rocket ship" and for the Skyscraper Image we used "a lithograph of a waterfall." Below are the results: </p>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 1</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 3</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 5</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 7</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 10</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_campanile_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 20</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/campanile.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Campanile</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 1</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 3</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 5</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 7</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 10</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_skyscraper_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall at noise level 20</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/skyscraper.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Skyscraper</figcaption>
+                        </figure>
+                    </div>
+                    <div class="flex justify-center mb-4 space-x-4">
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_1.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 1</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_3.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 3</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 5</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_7.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 7</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_10.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 10</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.7.3_qutb_noise_20.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">A rocket ship at noise level 20</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/qutb.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                            <figcaption class="mt-2 text-sm text-gray-600">Qutb Minar</figcaption>
+                        </figure>
+                    </div>
+            </section>
+            <section id="visual-anagrams" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Visual Anagrams</h2>
+                <p class="mb-4">Visual anagrams using diffusion models present an intriguing approach to creating dual-perspective images by cleverly combining noise estimates from two different prompts. Initially, I attempted to create these illusions by simply averaging the noise estimates from both orientations - one for the upright image ("an oil painting of people around a campfire") and one for the inverted image ("an oil painting of an old man"). However, this straightforward averaging approach produced results where neither perspective was clearly visible. Through experimentation, I discovered that adjusting the ratio of the noise estimates, giving slightly more weight (0.6) to the current orientation's noise estimate and less weight (0.4) to the flipped orientation's estimate, produced much more convincing results. This weighted approach helped maintain the clarity of each perspective while still preserving the dual-nature of the image, allowing viewers to see distinctly different scenes depending on the orientation.</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/old_man_weight0.7.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">An Oil Painting of an Old Man (weight 0.7)</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/campfire_weight0.3.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">An Oil Painting of People around a Campfire (weight 0.3)</figcaption>
+                    </figure>
+                </div>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/hotairballoon0.5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">An Oil Painting of a Hot Air Balloon (weight 0.5)</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/onion0.5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">An Oil Painting of an Onion (weight 0.5)</figcaption>
+                    </figure>
+                </div>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/skull0.5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a skull (weight 0.5)</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/waterfall0.5.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">A lithograph of a waterfall (weight 0.5)</figcaption>
+                    </figure>
+                </div>
+            </section>
+            <section id="hybrid-images" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Hybrid Images</h2>
+                <p class="mb-4">In this section, we implemented Factorized Diffusion to create hybrid images by manipulating frequency components of noise estimates from different text prompts. Using a Gaussian blur with kernel size 33 and sigma 2, we separated noise estimates into low and high-frequency components. For example, in our skull/waterfall hybrid, we combined the low frequencies from the skull noise estimate with the high frequencies from the waterfall noise estimate. This created an image that appears as a skull when viewed from afar (where low frequencies dominate) and transforms into a waterfall when viewed up close (where high frequencies become visible). We also experimented with other pairs like lithograph of red panda and skull and watercolor painting of seahorse and flowers, demonstrating how this technique can create compelling dual-perception images by leveraging the frequency-based characteristics of human vision..</p>
+                <div class="flex justify-center mb-4 space-x-4">
+                    <figure class="text-center">
+                        <img src="./images/redPanda_Skull.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hybrid Image of the lithograph of a red panda and skull</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/1.10skull_waterfall.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hybrid Image of the lithograph of a skull and a waterfall</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/seahorse_flower.png" alt="Original Image" class="max-w-full h-auto" width="200" height="200">
+                        <figcaption class="mt-2 text-sm text-gray-600">Hybrid image of a watercolor painting of a seahorse and flowers</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section id="reflection" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Reflection</h2>
+                <p class="mb-4">This project has provided a comprehensive exploration of diffusion models and their creative applications. We started with understanding the fundamental concepts of forward and reverse diffusion processes, implementing denoising techniques using both simple Gaussian blur and sophisticated UNet-based approaches. Through classifier-free guidance, we learned how to control image generation using text prompts, demonstrating the power of multimodal AI systems. The project then advanced to more creative applications: SDEdit showed us how to modify existing images with varying degrees of transformation, while inpainting revealed the model's ability to seamlessly fill in masked regions. The culmination in visual anagrams and hybrid images showcased how diffusion models can be manipulated to create sophisticated optical illusions. Throughout these experiments, we gained practical experience in handling GPU memory constraints, managing tensor operations, and fine-tuning parameters like noise levels and weights to achieve desired results. This project has demonstrated both the technical capabilities and creative potential of diffusion models in modern AI-driven image generation and manipulation.</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
