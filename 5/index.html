@@ -25,8 +25,14 @@
                 <a href="#sampling" class="block py-2 px-4 hover:bg-gray-700">1.5 Diffusion Model Sampling</a>
                 <a href="#cfg" class="block py-2 px-4 hover:bg-gray-700">1.6 Classifier-Free Guidance</a>
                 <a href="#image-translation" class="block py-2 px-4 hover:bg-gray-700">1.7 Image-to-Image Translation, Inpainting, and Text-Conditional Image-to-image Translation</a>
-                <a href="#visual-anagrams" class="block py-2 px-4 hover:bg-gray-700">Visual Anagrams</a>
-                <a href="#hybrid-images" class="block py-2 px-4 hover:bg-gray-700">Hybrid Images</a>
+                <a href="#visual-anagrams" class="block py-2 px-4 hover:bg-gray-700">1.8 Visual Anagrams</a>
+                <a href="#hybrid-images" class="block py-2 px-4 hover:bg-gray-700">1.9 Hybrid Images</a>
+                <h3 class="px-4 py-2 text-gray-400">Part B: Diffusion Models from Scratch!</h3>
+                <a href="#single-step-denoising" class="block py-2 px-4 hover:bg-gray-700">1.1 Training a Single-Step Denoising UNet</a>
+                <a href="#denoiser-training" class="block py-2 px-4 hover:bg-gray-700">1.2 Training a Denoiser</a>
+                <a href="#time-conditioned-unet" class="block py-2 px-4 hover:bg-gray-700">2.1 Time Conditioned UNet</a>
+                <a href="#class-conditioned-unet" class="block py-2 px-4 hover:bg-gray-700">2.2 Class Conditioned UNet</a>
+                
             </nav>
         </aside>
 
@@ -570,10 +576,140 @@
                     </figure>
                 </div>
             </section>
+            <section id="part-b" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part B: Building Diffusion Models from Scratch</h2>
+                
+                <p class="mb-4">In this part, we implement diffusion models from the ground up using the MNIST dataset, focusing on building and training various UNet architectures for denoising tasks.</p>
+            
+                <section id="single-step-denoising" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">1.1 Single-Step Denoising UNet</h3>
+                    <p class="mb-4">Implemented a UNet architecture with the following components:</p>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <ul class="list-disc list-inside">
+                            <li>Conv2d layers for maintaining resolution</li>
+                            <li>DownConv blocks for 2x downsampling</li>
+                            <li>UpConv blocks for 2x upsampling</li>
+                            <li>Flatten/Unflatten operations for 7x7 tensor processing</li>
+                            <li>Channel-wise concatenation using torch.cat()</li>
+                        </ul>
+                    </div>
+                    
+                    <figure class="text-center mb-6">
+                        <img src="./images/Unconditional Arch.png".png" alt="UNet Architecture" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">UNet Architecture for Single-Step Denoising</figcaption>
+                    </figure>
+                    <figure class="text-center mb-6">
+                        <img src="./images/Atomic Ops Diagram.png".png" alt="UNet Architecture" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Standard UNet Operations</figcaption>
+                    </figure>
+                </section>
+            
+                <section id="denoiser-training" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">1.2 Training the Denoiser</h3>
+                    <p class="mb-4">Implemented denoising using the L2 loss:</p>
+                    <div class="mb-4 text-center">
+                        \[ L = E_{z,x}||D_\theta(z) - x||^2 \]
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/1.2.png" alt="Noise Levels" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Varying levels of noise on MNIST digits (σ=[0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0])</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.2.2_training_loss.png" alt="Training Loss" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Training Loss Over Time</figcaption>
+                        </figure>
+                    </div>
+            
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/1.2.2_after_epoch1.png" alt="Training Loss" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Results on digits from the test set after 1 epoch of training</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/1.2.2_after_epoch5.png" alt="Training Loss" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Results on digits from the test set after 5 epochs of training</figcaption>
+                        </figure>
+                    </div>
+                        <p class="mb-4">Out of Distribution Testing: our denoiser is trained on sigma = 0.5, Let's see how the denoiser performs on different sigmas that it wasn't trained for. </p>
+                        <figure class="text-center">
+                            <img src="./images/out-of-distribution testing.png" alt="Training Loss" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Results on digits from the test set with varying noise levels.</figcaption>
+                        </figure>
+                        <p class="mb-4">As we can see it does predict relatively well for other values of σ</p>
+                </section>
+            
+                <section id="time-conditioned-unet" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">3. Time-Conditioned UNet</h3>
+                    <p class="mb-4">Enhanced the UNet architecture with time conditioning using FCBlocks:</p>
+                    
+                    <figure class="text-center mb-6">
+                        <img src="./images/time_conditional_arch.png" alt="Time-Conditioned UNet" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Time-Conditioned UNet Architecture</figcaption>
+                    </figure>
+                    <figure class="text-center mb-6">
+                        <img src="./images/fc_block.png" alt="Time-Conditioned UNet" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">FCBlock for conditioning</figcaption>
+                    </figure>
+            
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/2.3_epoch5.png" alt="5 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 5 Epochs</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/time_conditioned_epoch20.png" alt="20 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 20 Epochs</figcaption>
+                        </figure>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/Training Loss Time.png" alt="20 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Training Loss</figcaption>
+                        </figure>
+                        </div>
+                </section>
+            
+                <section id="class-conditioned-unet" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">4. Class-Conditioned UNet</h3>
+                    <p class="mb-4">We begin by adding class conditioning the the UNet structure and training the model for improved digit generation. The algorithm we used is shown in the figure below:</p>
+            
+                    <figure class="text-center mb-6">
+                        <img src="./images/Algo 3.png" alt="Time-Conditioned UNet" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600"> Algorithm B.3. Training class-conditioned UNet</figcaption>
+                    </figure>
+            
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/samples_after_1epoch.png" alt="5 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 1 Epoch</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/samples_after_5epoch.png" alt="5 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 5 Epoch</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/samples_after_15epoch.png" alt="20 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 15 Epochs</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/samples_after_20epoch.png" alt="20 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Samples after 20 Epochs</figcaption>
+                        </figure>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/Train Loss Class.png" alt="20 Epoch Samples" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Training Loss</figcaption>
+                        </figure>
+                        </div>
+                </section>
+            </section>
 
             <section id="reflection" class="mb-8">
                 <h2 class="text-2xl font-semibold mb-4">Reflection</h2>
-                <p class="mb-4">This project has provided a comprehensive exploration of diffusion models and their creative applications. We started with understanding the fundamental concepts of forward and reverse diffusion processes, implementing denoising techniques using both simple Gaussian blur and sophisticated UNet-based approaches. Through classifier-free guidance, we learned how to control image generation using text prompts, demonstrating the power of multimodal AI systems. The project then advanced to more creative applications: SDEdit showed us how to modify existing images with varying degrees of transformation, while inpainting revealed the model's ability to seamlessly fill in masked regions. The culmination in visual anagrams and hybrid images showcased how diffusion models can be manipulated to create sophisticated optical illusions. Throughout these experiments, we gained practical experience in handling GPU memory constraints, managing tensor operations, and fine-tuning parameters like noise levels and weights to achieve desired results. This project has demonstrated both the technical capabilities and creative potential of diffusion models in modern AI-driven image generation and manipulation.</p>
+                <p class="mb-4">This project has provided a comprehensive exploration of diffusion models and their creative applications. We started with understanding the fundamental concepts of forward and reverse diffusion processes, implementing denoising techniques using both simple Gaussian blur and sophisticated UNet-based approaches. Through classifier-free guidance, we learned how to control image generation using text prompts, demonstrating the power of multimodal AI systems. The project then advanced to more creative applications: SDEdit showed us how to modify existing images with varying degrees of transformation, while inpainting revealed the model's ability to seamlessly fill in masked regions. The culmination in visual anagrams and hybrid images showcased how diffusion models can be manipulated to create sophisticated optical illusions. Throughout these experiments, we gained practical experience in handling GPU memory constraints, managing tensor operations, and fine-tuning parameters like noise levels and weights to achieve desired results. This project has demonstrated both the technical capabilities and creative potential of diffusion models in modern AI-driven image generation and manipulation. Moreover, The implementation highlighted critical aspects of training dynamics, such as the importance of step-by-step loss tracking, effective learning rate scheduling, and finding the right balance between batch size and model capacity. This practical experience with DDPM implementation enhanced our understanding of both the theoretical foundations and practical considerations necessary for building effective diffusion models.</p>
             </section>
         </main>
     </div>
