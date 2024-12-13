@@ -27,6 +27,8 @@
                 <a href="#overlapping" class="block py-2 px-4 hover:bg-gray-700">Overlapping Patches</a>
                 <a href="#seam-finding" class="block py-2 px-4 hover:bg-gray-700">Seam Finding</a>
                 <a href="#texture-transfer" class="block py-2 px-4 hover:bg-gray-700">Texture Transfer</a>
+
+                <a href="#conclusion" class="block py-2 px-4 hover:bg-gray-700">Conclusion</a>
             </nav>
         </aside>
 
@@ -79,7 +81,7 @@
                 <h2 class="text-2xl font-semibold mb-4">Results</h2>
                 <div class="grid grid-cols-2 gap-4 mb-6">
                     <figure class="text-center">
-                        <video class="mx-auto" width="400" height="400" controls muted playsinline>
+                        <video class="mx-auto" width="200" height="200" controls muted playsinline>
                             <source src="./images/modified_keypoints.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
@@ -87,8 +89,8 @@
                         <figcaption class="mt-2 text-sm text-gray-600">Point Tracking Results</figcaption>
                     </figure>
                     <figure class="text-center">
-                        <video class="mx-auto" width="400" height="400" controls muted playsinline>
-                            <source src="./images/final_cobe_projection.mp4" type="video/mp4">
+                        <video class="mx-auto" width="200" height="200" controls muted playsinline>
+                            <source src="./images/final_cube_projection.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>                        
                         <figcaption class="mt-2 text-sm text-gray-600">Final AR Result</figcaption>
@@ -98,23 +100,141 @@
 
             <section id="part-b" class="mb-8">
                 <h2 class="text-2xl font-semibold mb-4">Part B: Image Quilting</h2>
-                <p class="mb-4">Implementation of texture synthesis and transfer algorithms based on patch sampling and optimal seam finding.</p>
-
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                    <figure class="text-center">
-                        <img src="./images/random_sample.png" alt="Random Sampling" class="mx-auto">
-                        <figcaption class="mt-2 text-sm text-gray-600">Random Patch Sampling</figcaption>
-                    </figure>
-                    <figure class="text-center">
-                        <img src="./images/overlap_result.png" alt="Overlapping Result" class="mx-auto">
-                        <figcaption class="mt-2 text-sm text-gray-600">Overlapping Patches Result</figcaption>
-                    </figure>
-                    <figure class="text-center">
-                        <img src="./images/seam_result.png" alt="Seam Finding" class="mx-auto">
-                        <figcaption class="mt-2 text-sm text-gray-600">Result with Seam Finding</figcaption>
-                    </figure>
-                </div>
+                
+                <section id="overview" class="mb-8">
+                    <p class="mb-4">This project implements the image quilting algorithm from the SIGGRAPH 2001 paper by Efros and Freeman. The goal is to perform texture synthesis (creating larger textures from small samples) and texture transfer (applying textures while preserving object shapes). Through increasingly sophisticated methods, we explore how to generate and manipulate textures effectively.</p>
+                </section>
+            
+                <section id="random-sampling" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Random Sampling</h3>
+                    <p class="mb-4">The simplest approach involves randomly sampling square patches from the input texture and placing them in a grid pattern. Using patch_size = 30 and output_size = (300,300), we created basic texture expansions. While straightforward, this method often produces visible seams and fails to maintain texture coherence.</p>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/random_pre_sample_brick.png" alt="Random Sampling Result 1" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Image</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/random_brick.png" alt="Random Sampling Result 2" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Random Sampling the Brick</figcaption>
+                        </figure>
+                    </div>
+                </section>
+            
+                <section id="overlapping" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Overlapping Patches</h3>
+                    <p class="mb-4">To improve coherence, we implemented patch sampling with overlapping regions. Each new patch is chosen based on its similarity to existing overlaps, measured using Sum of Squared Differences (SSD). Parameters: patch_size = 57, overlap_size = 5, tolerance = 3.</p>
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/bricks_small.jpg" alt="Overlapping Result 1" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Image</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/quiltsimple_brick.png" alt="Overlapping Result 2" class="mx-auto" width="300" height="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Quilt Simple Result</figcaption>
+                        </figure>
+                    </div>
+                </section>
+            
+                <section id="seam-finding" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Seam Finding</h3>
+                    <p class="mb-4">To eliminate visible edges between patches, we implemented a seam-finding algorithm that computes optimal paths through overlapping regions. Using parameters patch_size = 31, output_size = (300,300), overlap_size = 7, and tolerance = 2 for the first texture and patch_size = 71, output_size = (600,600), overlap_size = 20, and tolerance = 5 for the second texture and lastly patch_size = 19, output_size = (300,300), overlap_size = 5, and tolerance = 8 for the third image. We thus achieved seamless texture synthesis.</p>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/texture5.jpeg" alt="Source Texture" class="mx-auto" width="300" height="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Texture</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/quiltcut_texture5.png" alt="Transfer Result" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Quilt Cut Result</figcaption>
+                        </figure>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/texture4.jpg" alt="Source Texture" class="mx-auto" width="600" height="800">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Texture</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/quiltcut_texture4.png" alt="Transfer Result" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Quilt Cut Result</figcaption>
+                        </figure>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/text_small.jpg" alt="Source Texture" class="mx-auto" width="300" height="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Texture</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/quilt_cut_text.png" alt="Transfer Result" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Quilt Cut Result</figcaption>
+                        </figure>
+                    </div>
+                </section>
+            
+                <section id="texture-transfer" class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Texture Transfer</h3>
+                    <p class="mb-4">The final implementation takes a texture and applies it to another with target image guidance. Texture transfer extends Quilt Cut by introducing SSD_transfer which is the sum of squared differences (SSD) between the corresponding patch in the target image and the entire sample image. Using parameters patch_size = 13, overlap_size = 7, tolerance = 3, and alpha = 0.7, we successfully transferred textures while preserving target image structure.</p>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/text_small.jpg" alt="Source Texture" class="mx-auto" width="300" height="400">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Texture</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/feynman.png" alt="Target Image" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Target Image</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/texture_transfer_text_to_feynman.png" alt="Transfer Result" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Texture Transfer Result</figcaption>
+                        </figure>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <figure class="text-center">
+                            <img src="./images/sketch.png" alt="Source Texture" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Source Texture</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/feynman.png" alt="Target Image" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Target Image</figcaption>
+                        </figure>
+                        <figure class="text-center">
+                            <img src="./images/texture_tranfer_sketch_to_feynman.png" alt="Transfer Result" class="mx-auto">
+                            <figcaption class="mt-2 text-sm text-gray-600">Texture Transfer Result</figcaption>
+                        </figure>
+                    </div>
+                </section>
             </section>
+            <section id="conclusion" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Conclusion</h2>
+                
+                <p class="mb-4">This final project has provided comprehensive hands-on experience with two fundamental computer vision applications: augmented reality and texture synthesis. Through the AR implementation, I gained practical understanding of camera calibration, point tracking, and 3D projection - essential skills for creating mixed reality applications. The image quilting portion demonstrated the power of patch-based synthesis techniques and their applications in texture generation and transfer.</p>
+            
+                <h3 class="text-xl font-semibold mb-3">Key Learnings</h3>
+                
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h4 class="font-semibold mb-2">AR Implementation</h4>
+                        <ul class="list-disc pl-6">
+                            <li>Point correspondence and tracking using CSRT</li>
+                            <li>Camera calibration using SVD</li>
+                            <li>3D-to-2D projection techniques</li>
+                            <li>Video processing and frame manipulation</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Image Quilting</h4>
+                        <ul class="list-disc pl-6">
+                            <li>Patch-based texture synthesis</li>
+                            <li>Seam finding algorithms</li>
+                            <li>Texture transfer techniques</li>
+                            <li>Image blending and composition</li>
+                        </ul>
+                    </div>
+                </div>
+            
+                <p class="mb-4">These implementations have not only enhanced my technical skills but also deepened my understanding of computer vision fundamentals, preparing me for future work in areas like mixed reality, computational photography, and image processing.</p>
+            </section>
+            
         </main>
     </div>
 </body>
