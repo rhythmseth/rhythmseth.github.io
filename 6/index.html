@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 180 Project 6: AR and Image Quilting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 h-screen bg-gray-800 text-white fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold">CS 180 Project 6</h2>
+            </div>
+            <nav class="mt-6">
+                <a href="#overview" class="block py-2 px-4 hover:bg-gray-700">Overview</a>
+                <h3 class="px-4 py-2 text-gray-400">Part A: AR Cube Project</h3>
+                <a href="#setup" class="block py-2 px-4 hover:bg-gray-700">Setup</a>
+                <a href="#keypoints" class="block py-2 px-4 hover:bg-gray-700">Keypoints</a>
+                <a href="#propagation" class="block py-2 px-4 hover:bg-gray-700">Point Propagation</a>
+                <a href="#calibration" class="block py-2 px-4 hover:bg-gray-700">Camera Calibration</a>
+                <a href="#projection" class="block py-2 px-4 hover:bg-gray-700">Cube Projection</a>
+                
+                <h3 class="px-4 py-2 text-gray-400">Part B: Image Quilting</h3>
+                <a href="#random-sampling" class="block py-2 px-4 hover:bg-gray-700">Random Sampling</a>
+                <a href="#overlapping" class="block py-2 px-4 hover:bg-gray-700">Overlapping Patches</a>
+                <a href="#seam-finding" class="block py-2 px-4 hover:bg-gray-700">Seam Finding</a>
+                <a href="#texture-transfer" class="block py-2 px-4 hover:bg-gray-700">Texture Transfer</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="ml-64 p-8">
+            <h1 class="text-4xl font-bold mb-6">CS 180 Project 6: AR and Image Quilting</h1>
+            <p class="mb-4">By Rhythm Seth</p>
+
+            <section id="overview" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+                <p class="mb-4">This project combines two exciting computer vision applications: augmented reality and texture synthesis. Part A focuses on placing virtual objects in real scenes through camera calibration and 3D projection, while Part B explores creating and manipulating textures using patch-based synthesis techniques.</p>
+            </section>
+
+            <section id="part-a" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part A: AR Cube Project</h2>
+                <p class="mb-4">Implementation of an augmented reality system that projects a synthetic cube onto video frames using camera calibration and 3D-to-2D projection techniques.</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <figure class="text-center">
+                        <video class="mx-auto" width="400" height="400" controls muted playsinline>
+                            <source src="./images/box.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <figcaption class="mt-2 text-sm text-gray-600">Project Setup with Pattern Box</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/cube.png" alt="AR Result" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Final AR Result with Projected Cube</figcaption>
+                    </figure>
+                </div>
+                
+            </section>
+
+            <section id="keypoints" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Point Correspondence and Tracking</h2>
+                <p class="mb-4">The AR implementation began with establishing point correspondences between 2D image coordinates and their corresponding 3D world coordinates. We carefully marked 20 points on the patterned box, ensuring proper ordering since each 2D image point needed to match its exact 3D world coordinate. The world coordinate system was centered at one corner of the box, with measurements taken to determine the precise 3D positions.</p>
+            
+                <p class="mb-4">For tracking points across video frames, we implemented the CSRT (Channel and Spatial Reliability Tracking) tracker from OpenCV. Each point was tracked using a separate tracker instance, initialized with an 8x8 pixel patch centered around the marked point. The CSRT tracker proved robust in maintaining point tracking throughout the video sequence, adapting to changes in perspective and lighting.</p>
+            </section>
+            
+            <section id="calibration" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Camera Calibration and Projection</h2>
+                <p class="mb-4">Camera calibration was achieved by computing the projection matrix using Singular Value Decomposition (SVD). The process involved constructing a system of linear equations using the corresponding 2D-3D point pairs. The projection matrix maps 4D homogeneous world coordinates to 3D homogeneous image coordinates, effectively encoding both the camera's intrinsic parameters and its pose relative to the world coordinate system.</p>
+            
+                <p class="mb-4">With the calibrated camera parameters, we rendered a virtual cube by projecting its vertices onto each frame. The cube's position and scale were adjusted relative to the world coordinate system centered on the box. Finally, the frames were combined into a video, demonstrating stable cube projection throughout the sequence despite camera movement.</p>
+            </section>
+            
+            <section id="results" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Results</h2>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <figure class="text-center">
+                        <video class="mx-auto" width="400" height="400" controls muted playsinline>
+                            <source src="./images/modified_keypoints.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <figcaption class="mt-2 text-sm text-gray-600">Point Tracking Results</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <video class="mx-auto" width="400" height="400" controls muted playsinline>
+                            <source src="./images/final_cobe_projection.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>                        
+                        <figcaption class="mt-2 text-sm text-gray-600">Final AR Result</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section id="part-b" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Part B: Image Quilting</h2>
+                <p class="mb-4">Implementation of texture synthesis and transfer algorithms based on patch sampling and optimal seam finding.</p>
+
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <figure class="text-center">
+                        <img src="./images/random_sample.png" alt="Random Sampling" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Random Patch Sampling</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/overlap_result.png" alt="Overlapping Result" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Overlapping Patches Result</figcaption>
+                    </figure>
+                    <figure class="text-center">
+                        <img src="./images/seam_result.png" alt="Seam Finding" class="mx-auto">
+                        <figcaption class="mt-2 text-sm text-gray-600">Result with Seam Finding</figcaption>
+                    </figure>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
