@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EECS 106A Final Project: GPS-free Drone Navigation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside class="w-64 h-screen bg-gray-800 text-white fixed overflow-y-auto">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold">EECS 106A Project</h2>
+            </div>
+            <nav class="mt-6">
+                <a href="#introduction" class="block py-2 px-4 hover:bg-gray-700">Introduction</a>
+                <a href="#design" class="block py-2 px-4 hover:bg-gray-700">Design</a>
+                <a href="#implementation" class="block py-2 px-4 hover:bg-gray-700">Implementation</a>
+                <a href="#results" class="block py-2 px-4 hover:bg-gray-700">Results</a>
+                <a href="#conclusion" class="block py-2 px-4 hover:bg-gray-700">Conclusion</a>
+                <a href="#team" class="block py-2 px-4 hover:bg-gray-700">Team</a>
+                <a href="#materials" class="block py-2 px-4 hover:bg-gray-700">Additional Materials</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="ml-64 p-8">
+            <h1 class="text-4xl font-bold mb-6">GPS-free Autonomous Drone Navigation</h1>
+            
+            <section id="introduction" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Introduction</h2>
+                
+                <h3 class="text-xl font-semibold mb-3">Project Goal</h3>
+                <p class="mb-4">The goal of our project is to develop a GPS-less autonomous navigation system for a Tello drone that uses real-time camera input for environmental awareness and object tracking. The system enables the drone to visually detect a target object, navigate toward it, and land precisely when it reaches a predefined proximity threshold—all without relying on GPS. This involves implementing robust sensing, planning, and actuation components to ensure the drone can perform in GPS-denied environments such as indoors or in constrained outdoor areas.  
+                </p>
+                
+                <h3 class="text-xl font-semibold mb-3">Interesting Challenges</h3>
+                <ul class="list-disc pl-6 mb-4">
+                    <li>Navigating in GPS-Denied Environments: Most autonomous drones rely heavily on GPS for localization and navigation. Designing a system that operates without GPS requires innovation in computer vision and state estimation. 
+                    </li>
+                    <li>Object Detection and Tracking in Real-Time: The system must process video frames in real-time, perform noise reduction, and track the target object despite changing lighting conditions, motion blur, and dynamic backgrounds. 
+                    </li>
+                    <li>Combining SLAM and Object Tracking: Balancing the integration of SLAM (Simultaneous Localization and Mapping) for navigation and object tracking for interaction poses an interesting problem in resource management and system design. 
+                    </li>
+                    <li>Precise Landing: Landing safely on or near the target using only visual feedback is a non-trivial problem that involves accurate distance estimation, trajectory planning, and control. These challenges push the boundaries of what a lightweight and affordable drone platform like the Tello can achieve, making the project a valuable exploration into advanced robotics.
+                    </li>
+                </ul>
+
+                <h3 class="text-xl font-semibold mb-3">Real-World Applications</h3>
+                <p class="mb-4">The work from our project has numerous real-world applications, particularly in environments where GPS signals are unavailable or unreliable. In search and rescue operations, GPS-less drones can navigate through disaster-stricken areas such as collapsed buildings or dense forests to locate survivors, equipment, or specific markers. Similarly, in indoor navigation, drones equipped with visual navigation systems can be used for warehouse management, inventory tracking, or package delivery in large facilities or urban environments where GPS access is limited. In the field of agriculture, GPS-free drones can autonomously navigate greenhouses or tightly planted crop fields to monitor plant health, identify issues, or perform precise, localized spraying. Additionally, in surveillance and inspection, such drones can operate in hard-to-reach or confined spaces, such as industrial machinery, power plants, or other areas where GPS signals are obstructed, providing a valuable tool for routine maintenance and monitoring.</p>
+                
+            </section>
+
+            <section id="implementation" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Implementation</h2>
+                
+                <h3 class="text-xl font-semibold mb-3">Hardware Specifications</h3>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-2">Drone Specifications</h4>
+                        <ul class="list-disc pl-6 mb-4">
+                            <li>Weight: 80g (with propellers and battery)</li>
+                            <li>Dimensions: 98×92.5×41 mm</li>
+                            <li>Propeller: 3 inches</li>
+                            <li>Camera: 5MP (2592x1936)</li>
+                            <li>FOV: 82.6°</li>
+                            <li>Video: HD720P30</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Built-in Functions</h4>
+                        <p class="mb-4">Built-in Functions: Range Finder, Barometer, LED, Vision System, 2.4 GHz 802.11n Wi-Fi, 720p Live View. </p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">Software Dependencies</h4>
+                        <p class="mb-4">Key Python libraries used in implementation:</p>
+                        <ul class="list-disc pl-6 mb-4">
+                            <li>time: For timing and delay operations</li>
+                            <li>cv2: OpenCV for image processing and computer vision tasks</li>
+                            <li>imutils: Image processing utilities and convenience functions</li>
+                            <li>tellopy: Unofficial Tello drone control interface</li>
+                            <li>av: For handling video streams from the drone</li>
+                            <li>numpy: Numerical computing and array operations</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Development Environment</h4>
+                        <p class="mb-4">Initially experimented with various setups for ROS integration:</p>
+                        <ul class="list-disc pl-6 mb-4">
+                            <li>Tested Ubuntu VMs but faced performance issues with video streaming</li>
+                            <li>Attempted Docker containers but encountered networking complexities</li>
+                            <li>Finally settled on Robostack - a conda-based distribution that enabled running ROS and RViz natively on MacOS</li>
+                            <li>Development done on MacOS Big Sur 11.05.2 for consistent performance</li>
+                        </ul>
+                    </div>
+                    
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Algorithms Used</h3>
+                <div class="space-y-6">
+                    <div class="bg-white p-4 rounded shadow">
+                        <h4 class="font-semibold mb-2">1. Camera Streaming Algorithm</h4>
+                        <p class="mb-2">Purpose: Establishes a real-time video stream from the Tello drone for visual tracking.</p>
+                        <div class="mb-4">
+                            <h5 class="font-medium mb-1">Steps:</h5>
+                            <ul class="list-disc pl-6">
+                                <li>Connection Setup: Connect to Tello drone and start video stream</li>
+                                <li>Stream Handling: Manage video stream with av library</li>
+                                <li>Frame Retrieval: Extract and convert frames to OpenCV format</li>
+                                <li>Error Management: Handle AVError exceptions gracefully</li>
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded shadow">
+                        <h4 class="font-semibold mb-2">2. Frame Processing Algorithm</h4>
+                        <p class="mb-2">Purpose: Process frames for color-based target detection and tracking.</p>
+                        <div class="mb-4">
+                            <h5 class="font-medium mb-1">Steps:</h5>
+                            <ul class="list-disc pl-6">
+                                <li>Pre-Processing: Apply blur and convert to HSV</li>
+                                <li>Target Detection: Use HSV bounds and morphological operations</li>
+                                <li>Contour Analysis: Find and analyze target contours</li>
+                                <li>Offset Calculation: Determine target position relative to center</li>
+                                <li>Visualization: Draw tracking indicators and annotations</li>
+                            </ul>
+                            <img src="./images/cupMask.png" alt="cup mask" class="mb-4" >
+                        </div>
+                    </div>
+                
+                    <div class="bg-white p-4 rounded shadow">
+                        <h4 class="font-semibold mb-2">3. Drone Exploration Algorithm</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="mb-2">Purpose: Enable autonomous target search when not in view.</p>
+                                <div class="mb-4">
+                                    <h5 class="font-medium mb-1">Steps:</h5>
+                                    <ul class="list-disc pl-6">
+                                        <li>Initialization: Begin spinning motion and altitude maintenance</li>
+                                        <li>Detection Transition: Monitor frames and switch to tracking</li>
+                                        <li>Fallback: Return to exploration if target lost</li>
+                                        <li>Adaptive Movement: Adjust search patterns dynamically</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <img src="./images/spiral.png" alt="cup finding" class="mb-4" height="400" width="400">
+                            </div>
+                        </div>
+                    </div>
+                    
+                
+                    <div class="bg-white p-4 rounded shadow">
+                        <h4 class="font-semibold mb-2">4. PID Control Algorithm</h4>
+                        <p class="mb-2">Purpose: Ensure precise movement control based on target position.</p>
+                        <div class="mb-4">
+                            <h5 class="font-medium mb-1">PID Values:</h5>
+                            <ul class="list-disc pl-6">
+                                <li>Horizontal Control: Kp = -0.5, Ki = 0.01</li>
+                                <li>Vertical Control: Kp = 0.001, Ki = 0.0001</li>
+                            </ul>
+                        </div>
+                        <div class="mb-4">
+                            <h5 class="font-medium mb-1">Steps:</h5>
+                            <ul class="list-disc pl-6">
+                                <li>Error Calculation: Compute and normalize positional error</li>
+                                <li>PID Components: Calculate P, I, and D terms</li>
+                                <li>Output Computation: Generate controlled movement commands</li>
+                                <li>Command Execution: Apply yaw and throttle adjustments</li>
+                                <li>Dynamic Updates: Maintain real-time error correction</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-semibold mb-3">System Workflow</h3>
+<div class="mb-6">
+    <img src="./images/systemWorkflow.png" alt="Workflow" class="mb-4">
+    
+    <div class="space-y-6">
+        <div>
+            <h4 class="font-semibold mb-2">Step 1: Initialization</h4>
+            <ul class="list-disc pl-6">
+                <li>The drone connects to the Tello API, sets up its video stream, and initializes parameters for exploration and tracking.
+                </li>
+                <li>The system initializes the PID controllers for yaw (horizontal rotation) and throttle (vertical movement).
+                </li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-semibold mb-2">Step 2: Cup Finding State</h4>
+            <ul class="list-disc pl-6">
+                <li>The drone begins in the Cup Finding State, spinning in place to search for the target (the cup).
+                </li>
+                <li>The camera stream is processed frame by frame and the frames are analyzed for the presence of a red-colored object using HSV filtering.</li>
+                <li>If no target is detected, the drone continues spinning and stabilizing its altitude using a low throttle setting.</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-semibold mb-2">Step 3: Target Detection</h4>
+            <ul class="list-disc pl-6">
+                <li>When the target is identified, the system transitions to the Tracking State.</li>
+                <li>The drone stops spinning and begins using the PID controller to align with the target's position.</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-semibold mb-2">Step 4: Tracking State</h4>
+            <ul class="list-disc pl-6">
+                <li>In the Tracking State, the drone actively follows the target using PID control.</li>
+                <li>The frame's offset data (x, y) and the target's size (radius) are fed into the PID controllers.</li>
+                <li>The PID outputs adjust the drone’s yaw and throttle to keep the target centered in the frame.</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-semibold mb-2">Step 5: Proximity Detection</h4>
+            <ul class="list-disc pl-6">
+                <li>The system monitors the size of the detected target (percentage of the screen area).</li>
+                <li>When the target occupies a predefined area of the frame (e.g., 60%), the drone initiates a landing sequence.</li>
+                <li>If the target is lost during tracking, the system reverts to the Cup Finding State.</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4 class="font-semibold mb-2">Step 6: Landing</h4>
+            <ul class="list-disc pl-6">
+                <li>Once the target is deemed close enough, the drone lands autonomously by cutting forward motion and reducing throttle to zero.</li>
+            </ul>
+        </div>
+    </div>
+
+    <h4 class="font-semibold mb-2 mt-6">States of Operation</h4>
+<div class="grid grid-cols-3 gap-4">
+    <div class="bg-white p-4 rounded shadow">
+        <h5 class="font-semibold mb-2">Cup Finding State</h5>
+        <p class="mb-2">Objective: Search for and identify the target cup.</p>
+        <p class="mb-2">Actions:</p>
+        <ul class="list-disc pl-6">
+            <li>Clockwise spinning search</li>
+            <li>Altitude maintenance</li>
+            <li>Continuous frame processing</li>
+            <li>HSV color filtering for detection</li>
+        </ul>
+        <p class="mt-2">Transition Condition: Target detected in frame</p>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+        <h5 class="font-semibold mb-2">Tracking State</h5>
+        <p class="mb-2">Objective: Lock onto target and align position.</p>
+        <p class="mb-2">Actions:</p>
+        <ul class="list-disc pl-6">
+            <li>PID controller adjusts yaw based on horizontal offset</li>
+            <li>Throttle adjustment based on vertical offset</li>
+            <li>Forward movement when target below threshold</li>
+            <li>Continuous target tracking</li>
+        </ul>
+        <p class="mt-2">Transition Condition: Target size >60% or target lost</p>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+        <h5 class="font-semibold mb-2">Landing State</h5>
+        <p class="mb-2">Objective: Safe landing when target is close.</p>
+        <p class="mb-2">Actions:</p>
+        <ul class="list-disc pl-6">
+            <li>Forward velocity zeroing</li>
+            <li>Gradual throttle reduction</li>
+            <li>Ground detection landing</li>
+        </ul>
+        <p class="mt-2">Transition Condition: Ground contact detected</p>
+    </div>
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="flex items-center justify-center">
+            <img src="./images/cupFinding.png" alt="cup finding" class="max-w-full h-auto">
+        </div>
+        <div class="flex items-center justify-center">
+            <img src="./images/states.png" alt="states" class="max-w-full h-auto">
+        </div>
+    </div>
+    
+</div>
+
+
+                <h3 class="text-xl font-semibold mb-3">PID Control System</h3>
+                <div class="bg-white p-4 rounded shadow mb-6">
+                    <p class="mb-4">Implementation of dual-axis PID control:</p>
+                    <ul class="list-disc pl-6">
+                        <li>Horizontal Control: Kp = -0.5, Ki = 0.01</li>
+                        <li>Vertical Control: Kp = 0.001, Ki = 0.0001</li>
+                        <li>Target size-based distance control</li>
+                        <li>Automatic mode switching for target loss</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="conclusion" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Conclusion</h2>
+                
+                <h3 class="text-xl font-semibold mb-3">Results and Limitations</h3>
+                <p class="mb-4">Our solution successfully implemented a functional navigation and landing PID controller. By using a PID controller for path planning and color-based object detection via HSV masking, we were able to track predefined colors and stop at waypoints based on certain threshold values. It met the core design criteria of allowing navigation in a GPS-free environment. However, limitations include simple detection and controls due to hardware constraints. Ambitious goals of including SLAM for localization or advanced object detection with machine learning were also cut.
+                </p>
+
+                <h3 class="text-xl font-semibold mb-3">Challenges</h3>
+                <p class="mb-4">Particular difficulties arose, primarily during setup. Firstly, hardware constraints, such as the simple nature of Tello drones, limited our perception stack to just one monocular camera. Difficulties arose because Tello drones required Wifi connectivity, and our group did not possess a computer with Linux and Wifi, so we relied on Robostack, in order to cross platform ROS with MacOS. Many SLAM implementations were buggy, and pySLAM did not support live video streaming, requiring us to make further adaptations. Finally, trajectory data collected was noisy, leading to extra time spent during development.
+                </p>
+
+                <h3 class="text-xl font-semibold mb-3">Future Improvements</h3>
+                <ul class="list-disc pl-6 mb-4">
+                    <li>Reliance on color-based object detection is sensitive to lighting conditions, it would have been preferred to use a deep learning model like YOLO for a more robust target identification</li>
+                    <li>Our navigation system uses a fixed spiral path, which will only work in open areas. By replacing a fixed spiral path with a dynamic path planner based on SLAM, our drone would have more environmental awareness.</li>
+                </ul>
+            </section>
+
+            <section id="team" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Team Members</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-3">Members</h3>
+                        <ul class="list-disc pl-6 mb-4">
+                            <li>Andy Weng: Andy is a CS and DS major who hopes to learn about robot software and hardware while incorporating machine learning and algorithmic optimizations for practical applications.                             </li>
+                            <li>Jacob Shen: Jacob is a CS major interested in end-to-end autonomous driving and drones. His work is mostly on the computer vision side but he is eager to be involved in hardware and engineering. 
+                            </li>
+                            <li>Rhythm Seth: Rhythm is a CS and DS major with an interest in ML and Vision and their applications in robotics. 
+                            </li>
+                            <li>Raymond Tsao: Raymond is a CS and Applied Math major with an interest in the control and vision aspects of robotics. 
+                            </li>
+                            <li>Jeff Liu: Jeff is a CS major with interest in the perception/vision aspects of robotics. He has worked on autonomous vehicles in racing scenarios in the past
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="materials" class="mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Additional Materials</h2>
+                <p class="mb-4">Github Project Repository: https://github.com/andy-weng/106a-final-project</p>
+                <p class="mb-4">Project Demo Video: paste youtube link here</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
